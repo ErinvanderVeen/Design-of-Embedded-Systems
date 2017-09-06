@@ -27,6 +27,6 @@ int main(int argc, char* argv[])
                 rt_task_start(&demo_task, &demo, index);
         }
 
-        // Free the string that was allocated on the heap
+        // Free the int that was allocated on the heap
         free(index);
 }
