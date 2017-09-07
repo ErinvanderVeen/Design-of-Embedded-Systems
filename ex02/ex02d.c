@@ -5,13 +5,16 @@
 
 #include <alchemy/task.h>
 
-RT_TASK demo_task;
+RT_TASK demo_task, demo_task2;
 
 void demo(void *arg) {
-        RT_TASK_INFO curtaskinfo;
-        rt_task_inquire(NULL,&curtaskinfo);
-        uint8_t num = * (uint8_t *)arg;
-        rt_printf("Task name: %s\nTask Nr: %d\n\n", curtaskinfo.name, num);
+        RTIME num = * (RTIME *)arg;
+        rt_task_sleep(1000000000);
+        int return_val = rt_task_set_periodic(NULL, TM_NOW, 1000000000*num);
+        while(return_val == 0){
+                rt_printf("Task nr: %llu\n", num);
+                rt_task_wait_period(NULL);
+        }
 }
 
 int main(int argc, char* argv[])
@@ -22,8 +25,8 @@ int main(int argc, char* argv[])
         // Load default string
         strcpy(str, "Task ");
 
-        uint8_t i;
-        for(i = 1; i < 6; i++) {
+        RTIME i;
+        for(i = 1; i < 4; i++) {
                 // Only last part of buffer is overwritten
                 // to increase performance
                 sprintf(&str[5], "%d", i);
@@ -34,6 +37,9 @@ int main(int argc, char* argv[])
                 // Start task
                 rt_task_start(&demo_task, &demo, &i);
         }
+
+        printf("end program by CTRL-C\n");
+        pause();
 
         // Free the string that was allocated on the heap
         free(str);

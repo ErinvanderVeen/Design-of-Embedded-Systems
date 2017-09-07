@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
         // Load default string
         strcpy(str, "Task ");
 
-        uint16_t i;
+        uint8_t i;
         for(i = 1; i < 6; i++) {
                 // Only last part of buffer is overwritten
                 // to increase performance
