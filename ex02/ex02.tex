@@ -1,6 +1,7 @@
 \documentclass{scrartcl}
 
 \usepackage{listings}
+\usepackage{amsmath}
 
 \title{Design of Embedded System\\Exercise 2}
 \author{Erin van der Veen - s4431200\\
@@ -31,10 +32,10 @@ The tasks probably complete their instructions before the next task is started, 
 
 \section*{2d}
 Suppose we start a counter that counts in seconds the moment the process is executed.
-Whenever this counter reaches a number of seconds that is $0 (mod 1)$ (i.e. every second), Task 1 prints its index.
-Whenever this counter reaches a number of seconds that is $0 (mod 2)$ (i.e. every 2 seconds), Task 2 prints its index.
-Whenever this counter reaches a number of seconds that is $0 (mod 3)$ (i.e. every 3 seconds), Task 3 prints its index.
+Whenever this counter reaches a number of seconds that is $0 \mod 1$ (i.e. every second), Task 1 prints its index.
+Whenever this counter reaches a number of seconds that is $0 \mod 2$ (i.e. every 2 seconds), Task 2 prints its index.
+Whenever this counter reaches a number of seconds that is $0 \mod 3$ (i.e. every 3 seconds), Task 3 prints its index.
 
-Given the way the code is written, this can easily be extended to work with up to $2^16 - 1$ tasks.
+Given the way the code is written, this can easily be extended to work with up to $2^{16} - 1$ tasks.
 
 \end{document}
