@@ -12,6 +12,7 @@
 \section*{2a}
 Every task is given a unique name, this name is subsequently printed by the tasks as ``\lstinline|Task name: NAME|''.
 Where NAME is the name given to the task.
+The task with name ``Task 1'' is executed first, followed by ``Task 2'' etc.
 
 \section*{2b}
 Every task is now provided with both a unique name and a unique index.
@@ -21,9 +22,19 @@ Task name: NAME
 Task Nr: INDEX
 \end{lstlisting}
 Where NAME is once again the name of the task, and INDEX is the index that is given as an argument.
+The task with name ``Task 1'' and index 1 is executed first, the rest are then printed in sequential order.
 
 \section*{2c}
+The tasks are still executed in the same order as in ex02a and ex02b.
+This is most likely due to the very short execution time of the tasks.
+The tasks probably complete their instructions before the next task is started, or before a context switch can take place.
 
 \section*{2d}
+Suppose we start a counter that counts in seconds the moment the process is executed.
+Whenever this counter reaches a number of seconds that is $0 (mod 1)$ (i.e. every second), Task 1 prints its index.
+Whenever this counter reaches a number of seconds that is $0 (mod 2)$ (i.e. every 2 seconds), Task 2 prints its index.
+Whenever this counter reaches a number of seconds that is $0 (mod 3)$ (i.e. every 3 seconds), Task 3 prints its index.
+
+Given the way the code is written, this can easily be extended to work with up to $2^16 - 1$ tasks.
 
 \end{document}
