@@ -1,0 +1,45 @@
+\documentclass{scrartcl}
+
+\usepackage{listings}
+\usepackage{amsmath}
+
+\title{Design of Embedded System\\Exercise 4}
+\author{Erin van der Veen - s4431200\\
+	Brigel Pineti - s1005549}
+
+\begin{document}
+\maketitle
+
+\section*{4a}
+Since all tasks wait for the mysync semaphore, and task 2 has the highest priority, followed by task 1, and then task 0, the order of execution of the tasks is the same.
+First task 2 is executed, followed by 1 and then 0.
+
+\section*{4b}
+Now that task 1 and task 2 have the same priority, and the semaphore is set to \lstinline|S_FIFO| these tasks are executed in the other of which they wait for the semaphore.
+Since task 1 is created before task 2 is created, it is first.
+Task two is executed second, followed by task 0.
+
+Look at it this way, the scheduling ensures that tasks with the highest priority are executed first.
+However, when two tasks have the same priority, they are executed in the order in which they entered the queue of the semaphore.
+
+\section*{4c}
+First, task 2 runs until it reaches it's halfway point.
+At that point, it increases the priority of Task 1 to be higher that it.
+This means, that the CPU will switch to task 1, which is executed until completed (since it has the highest priority).
+After it has completed, task 2 is again the task with the highest priority.
+However, the first thing task 2 does, is increase the priority of task 0 to be higher than itself.
+The CPU therefore, executes and completes execution of task 0.
+When task 0 has completed, task 2 once again becomes the task with the highest priority, and is executed until completed.
+
+\section*{4d}
+Task 2 is executed first since it has the highest priority (52).
+When it reaches its halfway point, it changes priority to 38.
+Task 1 then takes over, since it has the highest priority (51).
+When task 1 reaches its halfway point, it changes its priority to 39.
+Task 0 then takes over with a priority of 50.
+When task 0 reaches its halfway point it sets its own priority to 40.
+Since task 0 still has the highest priority (40, over 39 and 38) it continues until completion.
+Task 1 then has the highest priority (of 39), so it runs until completed.
+The last task is task 2, it runs after task 1 has completed.
+
+\end{document}
