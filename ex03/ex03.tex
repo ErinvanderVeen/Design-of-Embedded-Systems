@@ -1,0 +1,33 @@
+\documentclass{scrartcl}
+
+\usepackage{listings}
+\usepackage{amsmath}
+
+\title{Design of Embedded System\\Exercise 3}
+\author{Erin van der Veen - s4431200\\
+	Brigel Pineti - s1005549}
+
+\begin{document}
+\maketitle
+
+\section*{3a}
+The global counter is first incremented to 10 by taskOne, after which it is decremented to 0 by taskTwo.
+
+\section*{3b}
+Access to the global variable is handled through a semaphore.
+A task needs to wait until the variable is released to inc/dec global.
+Since we use S\_FIFO as the semaphore behaviour, the task alterate in their execution.
+
+In order to implement the bonus, two semaphores can be created.
+The first will determine whether a task can INC the variable, the other will determine whether a task can DEC the variable.
+The tasks then increment the semaphore of the opposite task, to allow one of the other tasks to perform their operation.
+
+\section*{3c}
+After the tasks have been created, the first thing they do is wait on a semaphore.
+When all tasks are created, the main then broadcasts the semaphore, to allow all blocked tasks to execute.
+In order to ensure that the tasks are executed in order of priority, the semaphore is in S\_PRIO mode.
+
+The same behaviour can also be achieved by using \lstinline|rt_sem_v|.
+This is achieved by simply calling this function n times, where n is the amount of tasks that were created.
+
+\end{document}
