@@ -28,11 +28,7 @@ void demo(void *arg)
       runtime = runtime + SPINTIME;
       printf("Running Task  : %d  at ms : %d\n",num,runtime/1000000);
       if(runtime == 0.5 * EXECTIME) {
-         switch(num) {
-            case 0: rt_task_set_priority(&demo_task[0],40); break;
-            case 1: rt_task_set_priority(&demo_task[1],39); break;
-            case 2: rt_task_set_priority(&demo_task[2],38); break;
-         }
+	rt_task_set_priority(&demo_task[num],40 - num);
       }
     }
     printf("End Task  : %d\n",num);
