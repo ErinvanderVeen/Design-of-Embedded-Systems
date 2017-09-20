@@ -18,8 +18,9 @@ Access to the global variable is handled through a semaphore.
 A task needs to wait until the variable is released to inc/dec global.
 Since we use S\_FIFO as the semaphore behaviour, the task alterate in their execution.
 
-In order to implement the bonus, two semaphores can be created.
-The first will determine whether a task can INC the variable, the other will determine whether a task can DEC the variable.
+\subsection*{Bonus}
+In order to implement the bonus, two semaphores are created.
+The first determines whether a task can INC the variable, the other determines whether a task can DEC the variable.
 The tasks then increment the semaphore of the opposite task, to allow one of the other tasks to perform their operation.
 
 \section*{3c}

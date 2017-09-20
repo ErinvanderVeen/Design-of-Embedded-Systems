@@ -12,19 +12,19 @@ static RT_TASK  t1;
 static RT_TASK  t2;
 
 uint8_t global = 0;
-RT_SEM global_sem;
+RT_SEM sem_inc, sem_dec;
 
 void taskOne(void *arg)
 {
 	uint8_t i;
 	for (i = 0; i < ITER; i++) {
 		// Wait for the semaphore
-		rt_sem_p_timed(&global_sem, NULL);
+		rt_sem_p_timed(&sem_inc, NULL);
 
 		rt_printf("I am taskOne and global = %d................\n", ++global);
 
 		// Release Global
-		rt_sem_v(&global_sem);
+		rt_sem_v(&sem_dec);
 	}
 }
 
@@ -33,18 +33,19 @@ void taskTwo(void *arg)
 	uint8_t i;
 	for (i = 0; i < ITER; i++) {
 		// Wait for the semaphore
-		rt_sem_p_timed(&global_sem, NULL);
+		rt_sem_p_timed(&sem_dec, NULL);
 
 		rt_printf("I am taskTwo and global = %d----------------\n", --global);
 
 		// Release Global
-		rt_sem_v(&global_sem);
+		rt_sem_v(&sem_inc);
 	}
 }
 
 int main(int argc, char* argv[]) {
 	// Create semaphores
-	rt_sem_create(&global_sem, "global counter semaphore", 0, S_FIFO);
+	rt_sem_create(&sem_dec, "increment semaphore", 0, S_FIFO);
+	rt_sem_create(&sem_inc, "decrement semaphore", 1, S_FIFO);
 
 	// Create tasks
 	rt_task_create(&t1, "task1", 0, 1, 0);
@@ -52,11 +53,9 @@ int main(int argc, char* argv[]) {
 	rt_task_start(&t1, &taskOne, 0);
 	rt_task_start(&t2, &taskTwo, 0);
 
-	// Start cycle
-	rt_sem_v(&global_sem);
-
 	// Clean up the semaphores
-	rt_sem_delete(&global_sem);
+	rt_sem_delete(&sem_dec);
+	rt_sem_delete(&sem_inc);
 
 	return 0;
 }
