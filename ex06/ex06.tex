@@ -1,0 +1,28 @@
+\documentclass{scrartcl}
+
+\usepackage{listings}
+\usepackage{amsmath}
+
+\title{Design of Embedded System\\Exercise 6}
+\author{Erin van der Veen - s4431200\\
+	Brigel Pineti - s1005549}
+
+\begin{document}
+\maketitle
+
+In order to start Medium task after the Low task has already started we can do two things.
+\begin{enumerate}
+	\item Return to the normal kernel by sleeping the Low task
+	\item Start the Medium task from the Low task
+\end{enumerate}
+In the code, I ended up using the second method, as it provides more deterministic behaviour.
+This is of course only done after Low task has already locked the semaphore.
+The medium task then prints its string ``Medium task running'' twice, before starting High task.
+High task tries to lock the semaphore, but is forced to wait.
+This leads to a content switch to Medium task, which then runs until completion.
+Since High tasked is still waiting for the semaphore, a content switch takes place to Low task.
+The first thing Low task does is unlock the semaphore.
+This removes High task from the FIFO queue, and a content switch takes place to High task.
+High tasks runs until completed, after which Low task does the same.
+
+\end{document}

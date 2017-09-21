@@ -1,0 +1,51 @@
+\documentclass{scrartcl}
+
+\usepackage{listings}
+\usepackage{amsmath}
+
+\title{Design of Embedded System\\Exercise 5}
+\author{Erin van der Veen - s4431200\\
+	Brigel Pineti - s1005549}
+
+\begin{document}
+\maketitle
+
+\section*{5a}
+As each task is created, they wait on the FIFO semaphore.
+Then, when all tasks are created they are released in the order in which they were created.
+Since no Round Robin Scheduling is used, the tasks are ran until completion, at which point the next task is run.
+\begin{enumerate}
+	\item Task 0 starts
+	\item Task 0 completes
+	\item Task 1 starts
+	\item Task 1 completes
+	\item Task 2 starts
+	\item Task 2 completes
+\end{enumerate}
+
+\section*{5b}
+The output can either be the same as before, or it can be different.
+If you set the timeslice of the tasks to be the same or higher than the EXECTIME, nothing changes.
+When, however, you set it to equal the SPINTIME, the tasks will take turns at printing their statements. I.e.
+\begin{enumerate}
+	\item \dots
+	\item Task 0 prints
+	\item Task 1 prints
+	\item Task 2 prints
+	\item \dots
+\end{enumerate}
+
+\section*{5c}
+Given that task 3 has a higher priority than the other tasks, it is always allowed to complete first.
+After that however, the Round Robin Scheduling has the same impact as it had in 5b.
+\begin{enumerate}
+	\item Task 3 starts
+	\item Task 3 completes
+	\item \dots
+	\item Task 0 prints
+	\item Task 1 prints
+	\item Task 2 prints
+	\item \dots
+\end{enumerate}
+
+\end{document}

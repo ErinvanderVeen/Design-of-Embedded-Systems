@@ -1,0 +1,33 @@
+\documentclass{scrartcl}
+
+\usepackage{listings}
+\usepackage{amsmath}
+
+\title{Design of Embedded System\\Exercise 7}
+\author{Erin van der Veen - s4431200\\
+	Brigel Pineti - s1005549}
+
+\begin{document}
+\maketitle
+
+\section*{7a}
+7a is a very simple program, it simply sleeps for half a second, and then writes value to the pin.
+In order to achieve an alternating effect, \lstinline|value| is then XOR'ed with 1.
+This flips the value from 1 to 0, and 0 to 1.
+
+\section*{7b}
+7b simply extends the program of 7a with a task (``Peter'') that listens for Rising and Falling edges on the interrupt pin.
+Whenever this happens, a global counter is increased by 1 and the value is printed.
+The task also prints whether the interrupt occurred on a Rising edge (1), or a Falling edge (0).
+
+\section*{7c}
+7c has two possible interpretations.
+\begin{enumerate}
+	\item A single press should turn the LED on/off
+	\item The LED should be lit for as long as the button is pressed
+\end{enumerate}
+In the implementation that we handed in, we follow definition 1.
+Changing the code to definition 2, however, is done by simply chancing a single line such that ``Peter'' not only listens to Rising edges, but also to Falling edges.
+Whenever a interrupt occurs, the amount of interrupts is printed, the LED is switched on/off, and the internal LED state of the program is XOR'ed.
+
+\end{document}
