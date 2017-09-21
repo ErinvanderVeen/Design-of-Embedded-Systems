@@ -19,10 +19,10 @@ In the code, I ended up using the second method, as it provides more determinist
 This is of course only done after Low task has already locked the semaphore.
 The medium task then prints its string ``Medium task running'' twice, before starting High task.
 High task tries to lock the semaphore, but is forced to wait.
-This leads to a content switch to Medium task, which then runs until completion.
-Since High tasked is still waiting for the semaphore, a content switch takes place to Low task.
+This leads to a context switch to Medium task, which then runs until completion.
+Since High tasked is still waiting for the semaphore, a context switch takes place to Low task.
 The first thing Low task does is unlock the semaphore.
-This removes High task from the FIFO queue, and a content switch takes place to High task.
+This removes High task from the FIFO queue, and a context switch takes place to High task.
 High tasks runs until completed, after which Low task does the same.
 
 \end{document}
