@@ -5,6 +5,9 @@
 #include <alchemy/timer.h>
 #include <rtdm/gpio.h>
 
+#include <string.h>
+#include <errno.h>
+
 int main(int argc, char* argv[])
 {
 	int fd, value, ret;
@@ -14,7 +17,11 @@ int main(int argc, char* argv[])
 
 	while(1) {
 		usleep(500000);
-		ret = ioctl(fd, GPIO_RTIOC_DIR_OUT, &value);
+		if((ret = ioctl(fd, GPIO_RTIOC_DIR_OUT, &value)) == -1) {
+			int errcode = errno;
+			printf("ERROR %d : %s\n", errcode, strerror(errcode));
+		}
+
 		value ^= 1;
 	}
 

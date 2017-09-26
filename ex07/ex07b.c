@@ -5,6 +5,9 @@
 #include <alchemy/timer.h>
 #include <rtdm/gpio.h>
 
+#include <string.h>
+#include <errno.h>
+
 RT_TASK interrupt_task;
 uint8_t nr_interrupts = 0;
 int i_fd;
@@ -15,6 +18,8 @@ void count_interrupts(void *arg)
 
 	while(1) {
 		if((ret = read(i_fd, &value, sizeof(value))) == -1) {
+			int errcode = errno;
+			printf("ERROR %d : %s\n", errcode, strerror(errcode));
 			exit(ret);
 		}
 		nr_interrupts++;
@@ -40,6 +45,8 @@ int main(int argc, char* argv[])
 	while(1) {
 		usleep(500000);
 		if ((ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &value)) == -1) {
+			int errcode = errno;
+			printf("ERROR %d : %s\n", errcode, strerror(errcode));
 			return ret;
 		}
 		value ^= 1;
