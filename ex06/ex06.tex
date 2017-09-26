@@ -10,6 +10,7 @@
 \begin{document}
 \maketitle
 
+\section*{Semaphores}
 In order to start Medium task after the Low task has already started we can do two things.
 \begin{enumerate}
 	\item Return to the normal kernel by sleeping the Low task
@@ -24,5 +25,10 @@ Since High tasked is still waiting for the semaphore, a context switch takes pla
 The first thing Low task does is unlock the semaphore.
 This removes High task from the FIFO queue, and a context switch takes place to High task.
 High tasks runs until completed, after which Low task does the same.
+
+\section*{Mutex}
+The mutex ensures that when PrioHigh tries to lock the mutex that is locked by PrioHigh, the priority of PrioLow changes to that of PrioHigh.
+This allows PrioLow to unlock the the semaphore, after which PrioHigh is once again allowed to run.
+After that, the priority of PrioLow is restored, and PrioMedium is allowed to finish first.
 
 \end{document}
