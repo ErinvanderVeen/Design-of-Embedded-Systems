@@ -8,14 +8,13 @@
 #include <string.h>
 #include <errno.h>
 
-#define MAX_COUNTER 110
+#define MAX_COUNTER 10010
 
 RT_TASK task_periodic, task_interrupt;
 int i_fd, w_fd, ret, i_value;
 
-RTIME start;
-
-uint16_t counter;
+uint16_t counter_send = 0;
+uint16_t counter_receive = 0;
 
 int val_up = 1;
 int val_down = 0;
@@ -36,22 +35,22 @@ void write_RTIMES(char * filename, unsigned int number_of_values,
 
 void periodic_write(void *arg)
 {
-
-	rt_task_set_periodic(NULL, TM_NOW, 100000);
-	while(counter < MAX_COUNTER) {
-		rt_task_wait_period(NULL);
-		start = rt_timer_read();
-		ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &val_down);
+	rt_task_set_periodic(NULL, TM_NOW, 10000000);
+	while(counter_send < MAX_COUNTER) {
 		ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &val_up);
-		counter++;
+		rt_task_wait_period(NULL);
+		array[counter_send] = rt_timer_read();
+		ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &val_down);
+		counter_send++;
 	}
 }
 
 void interrupt_void(void *arg)
 {
-	while(counter < MAX_COUNTER) {
+	while(counter_receive < MAX_COUNTER) {
 		ret = read(i_fd, &i_value, sizeof(i_value));
-		array[counter] = rt_timer_read() - start;
+		array[counter_receive] = rt_timer_read() - array[counter_receive];
+		counter_receive++;
 	}
 	rt_printf("DONE\n");
 	write_RTIMES("result.csv", MAX_COUNTER, array);
