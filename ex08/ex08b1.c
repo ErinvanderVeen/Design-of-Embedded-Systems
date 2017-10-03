@@ -27,7 +27,7 @@ void write_RTIMES(char * filename, unsigned int number_of_values,
 	FILE *file;
 	file = fopen(filename,"w");
 	while (n<number_of_values) {
-		fprintf(file,"%u,%llu\n",n,time_values[n]);  
+		fprintf(file,"%u,%llu\n",n,time_values[n]);
 		n++;
 	}
 	fclose(file);
@@ -40,9 +40,11 @@ void periodic_write(void *arg)
 		ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &val_up);
 		rt_task_wait_period(NULL);
 		array[counter_send] = rt_timer_read();
-		ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &val_down);
 		counter_send++;
+		ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &val_down);
+    //rt_printf("w\n");
 	}
+    rt_printf("w DONE");
 }
 
 void interrupt_void(void *arg)
@@ -50,7 +52,8 @@ void interrupt_void(void *arg)
 	while(counter_receive < MAX_COUNTER) {
 		ret = read(i_fd, &i_value, sizeof(i_value));
 		array[counter_receive] = rt_timer_read() - array[counter_receive];
-		counter_receive++;
+        counter_receive++;
+            //rt_printf("%llu\n", rt_timer_read());
 	}
 	rt_printf("DONE\n");
 	write_RTIMES("result.csv", MAX_COUNTER, array);
@@ -65,7 +68,12 @@ int main(int argc, char* argv[])
 		printf("ERROR %d : %s\n", errcode, strerror(errcode));
 		exit(ret);
 	}
-	i_fd = open("/dev/rtdm/pinctrl-bcm2835/gpio13",O_RDONLY);
+	;
+	if((i_fd = open("/dev/rtdm/pinctrl-bcm2835/gpio13",O_RDONLY)) == -1) {
+		int errcode = errno;
+		printf("ERROR %d : %s\n", errcode, strerror(errcode));
+		exit(ret);
+	}
 
 	int xeno_trigger=GPIO_TRIGGER_EDGE_FALLING;
 	if((ret = ioctl(i_fd, GPIO_RTIOC_IRQEN, &xeno_trigger)) == -1) {
@@ -74,10 +82,8 @@ int main(int argc, char* argv[])
 		exit(ret);
 	}
 
-	ret = ioctl(w_fd, GPIO_RTIOC_DIR_OUT, &val_up);
-
 	// Create/Start tasks
-	rt_task_create(&task_interrupt, "Frouke", 0, 50, 0);
+	rt_task_create(&task_interrupt, "Frouke", 0, 99, 0);
 	rt_task_start(&task_interrupt, &interrupt_void, NULL);
 
 	rt_task_create(&task_periodic, "Oussama", 0, 50, 0);
