@@ -5,19 +5,22 @@
 #include <alchemy/timer.h>
 #include <rtdm/gpio.h>
 
-extern int add(int, int);
+RT_TASK* interrupt_handler_task;
 
-void add_task_f(void *arg)
+void interrupt_handler(void *arg)
 {
-	rt_printf("%d\n", add(42,42));
+	rt_printf("Test\n");
 }
 
-int start_add_task() {
-	RT_TASK* add_task = malloc(sizeof(RT_TASK));
+int create_interrupt_handler_task() {
+	interrupt_handler_task = malloc(sizeof(RT_TASK));
+	return (int) interrupt_handler_task;
+}
 
-	// Create/Start periodic task
-	rt_task_create(add_task, "Frouke", 0, 99, 0);
-	rt_task_start(add_task, &add_task_f, NULL);
+int get_interrupt_handler_void() {
+	return (int) &interrupt_handler;
+}
 
-	return 1;
+int get_interrupt_handler_task() {
+	return (int) interrupt_handler_task;
 }
