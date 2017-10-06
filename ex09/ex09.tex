@@ -1,0 +1,141 @@
+\documentclass{scrartcl}
+
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{caption}
+\newenvironment{longlisting}{\captionsetup{type=listing}}{}
+\usepackage{minted}
+\setminted{fontsize=\small,breaklines,breakanywhere,tabsize=4}
+
+\title{Design of Embedded System\\Exercise 9\\Using Clean on a Real Time Operating System}
+\author{Erin van der Veen - s4431200}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\pagebreak
+
+\section{The Compiler}
+\subsection{The Procedure}
+Compiling a Clean program is done in three distinct steps.
+First, the Clean code (.icl and .dcl) is compiled to an intermidiate language called ``Core Clean''.
+This step is performed by a program that was written in Clean.
+Next, ``Core Clean'' is compiled to another, platform independent, intermediate language (.abc).
+This step is performed by a mixture of programs written in both Clean and C.
+In the last step, abc-code is compiled to bytecode (.o), which is done entirely by C-code.
+
+\subsection{Bootstrapping the Compiler}
+The Clean compiler can, in general, be downloaded from the ftp server\footnote{ftp.cs.ru.nl/pub/Clean/builds/}.
+Unfortunately, there is no build-script available for ARM\footnote{gitlab.science.ru.nl/clean-and-itasks/clean-build}.
+As such, we must build the environment and compiler ourselves.
+Getting the source-code of the compiler and trying to just build it is impossible since it requires that the compiler is already installed.
+The last step of the compilation procedure does not require Clean, however.
+Using this knowledge, the compiler can be bootstrapped using another machine to generate the .abc code, and then compiled to a native binary using a C program.
+
+\section{Linking Clean and C}
+\subsection{Clean to C}
+\begin{longlisting}
+	\begin{minted}{Clean}
+		usleep :: !Int !*World -> (!Int, !*World)
+		usleep i w = code {
+			ccall usleep "I:I:A"
+		}
+	\end{minted}
+	\caption{Calling the usleep C function from Clean\label{L:ctoclean_example}}
+\end{longlisting}
+Calling C functions from Clean is relatively easy.
+Consider code in Listing \ref{L:ctoclean_example}.
+The \mintinline{Clean}{code} keyword tells the compiler that whatever is in between the brackets should be interpreted directly as abc code.
+In this abc-block we then use the \mintinline{Clean}{ccall} to tell the compiler that we want to call a C-function.
+\mintinline{Clean}{ccall} takes 2 arguments, the first is the name of the C-function that we want to call.
+The second is a description of the arguments and return values of the function that we call.
+This description consists of 3 parts (``x:y:z'').
+`x' denotes the arguments that must be passed to the function, in this case, we sent a single Integer.
+The return value is denoted by y, in the example, we expect the function to return an Integer.
+The last part (z) denotes any arguments that must not be passed to the function.
+More often than not, you will see that this is the *World, which ensures that the language stays pure.
+Linking is done by passing \mintinline{Bash}{-l -lib} to \mintinline{Bash}{clm}.
+
+\subsection{C to Clean}
+Clean offers functionality to export its functions with a foreign function interface.
+This is done using the by adding \mintinline{Clean}{foreign export ccall hello_world} to a .icl file.
+The function must also be exported in the .dcl file.
+It must be noted, however, that Clean uses a run time system.
+
+\section{The Runtime System}
+Clean is a language that makes use of a garbage collector and several other implementation details that require a run time system.
+Unlike Java and C\#, this run time system is linked into final binary.
+Therefore, running any Clean program is preceded by that init system of the run time system.
+I noted before that it is possible to call Clean functions from C, while this is true, the run time system must be initialized before C can call a Clean function.
+With the help of Drs. van Groningen, I am currently trying to create a modified version of the run time system\footnote{github.com/ErinvanderVeen/C-to-Clean}, that allows you to initialize it from C.
+This would mean that it would no longer be necesaary to start the program in Clean.
+
+\section{Xenomai Tasks and Threads}
+\subsection{Xenomai Tasks}
+A Xenomai task is a feature of the Alchemy API that allows a process to create tasks that run on the Cobalt kernel.
+The Alchemy API also allows additional features like periodic tasks and semaphores, but for the sake of simplicity, these will be disregarded for the rest of this assignment.
+In the background, when the Alchemy API receives a call to create a new task, it does some preprocessing, and then uses the Cobalt API to create a xthread.
+An xthread is a thread that runs on the Cobalt kernel.
+One of the parameters to spawn an xthread is a function pointer, this is the function that is executed by the xthread.
+Running on the Cobalt kernel ensures that the thread has priority over any thread that runs on the normal Linux kernel, and is desired in real time applications.
+
+\subsection{Xenomai Tasks in Clean}
+\begin{longlisting}
+	\begin{minted}{Clean}
+		thunk_to_module_name_pointer :: !(a a->Bool) -> Int;
+		thunk_to_module_name_pointer a = code {
+			pushD_a 0
+			pop_a 1
+			push_b 0
+			load_si16 0
+			addI
+			load_i 6
+		}
+	\end{minted}
+	\caption{G$\forall$ST using abc code to get a module name\label{L:abc_m_p}}
+\end{longlisting}
+As mentioned in the subsection above, a function pointer must be provided to the Alchemy API in order for it to start the task.
+The G$\forall$ST framework shows that it might be possible to do this in Clean by using the \mintinline{Clean}{code}-block mentioned earlier.
+Consider, for example the code in Listing \ref{L:abc_m_p}, where they manage to extract the name of a module.
+Unfortunately, figuring out how to obtain the function pointer using a similar method was outside the scope of this assignment.
+Alternatively, I created a C-function that simply returns the function pointer.
+
+\subsubsection{Starting the Task}
+Clean does not support multi-threading, although there has been some research that looks into this\footnote{ru.nl/publish/pages/769526/z09\_jan\_groothuijse.pdf}.
+This implies that a Clean program does not create the required context to allow for contextswitching within threads.
+The initial context switch that takes place when Clean creates a Xenomai Task happens without any issues (since the new thread is created by the Xenomai API).
+This context switch that takes place whenever the Xenomai Task is blocked, however, causes a segmentation fault.
+This is due to the context that I mentioned earlier and cannot be helped without either:
+\begin{enumerate}
+	\item Not starting the process as a Clean process
+	\item Implementing multi threading in Clean
+\end{enumerate}
+As mentioned before, both of these are as of yet outside the scope of this assigment.
+
+\section{Xthread}
+%TODO: Try to elevate the normal Clean thread to a xthread.
+%TODO: If impossible, explain what IS done to be as REAL time as possible.
+
+\section{RTIME}
+The RTIME in the Alchemy API is a type alias for the unsigned long long.
+On a Raspberry Pi 2 (the one I use) that type is stored in 64 bits.
+The maximum that Clean can index on a 32 bit system (like the Raspberry Pi 2) is the Int (of 32 bits).
+In order to be able to store unsigned long long in Clean, I used a Int, Int tuple.
+Where the idea was to store the most significant bits in the left integer, and the least significant bits in the right integer.
+In order parse the RTIME that the Alchemy API returns, I used the derefInt function in Clean.
+I would first read 4 bytes and store those, then increment the pointer by 4, and finally read the last 4 bytes.
+Unfortunately, I ran into the problem that the Raspberry Pi stores it's data in a little Endian format.
+After careful study of the code, I was not sure if \mintinline{Clean}{System._Pointer} takes the Endian of an architecture into consideration.
+As such, I decided it was not within the scope of this assigment to figure this out.
+Instead I created a type synonym \mintinline{Clean}{:: RTIME :== Pointer} that would be used in the calculations.
+I overloaded this datatype in both < RTIME and - RTIME and used ccalls to calculate the results.
+
+\section{Implementation}
+%TODO: Explain how the codes calculates the center of the pendulum, and how characters are represented/drawn
+
+\section{Acknowledgments}
+A special thanks to Camil Staps for helping me set up the compiler, and any other help he provided me.
+
+\end{document}
