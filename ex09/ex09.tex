@@ -8,7 +8,7 @@
 \usepackage{minted}
 \setminted{fontsize=\small,breaklines,breakanywhere,tabsize=4}
 
-\title{Design of Embedded System\\Exercise 9\\Using Clean on a Real Time Operating System}
+\title{Design of Embedded Systems\\Exercise 9\\Using Clean on a Real Time Operating System}
 \author{Erin van der Veen - s4431200}
 
 \begin{document}
@@ -130,10 +130,37 @@ Unfortunately, I ran into the problem that the Raspberry Pi stores it's data in 
 After careful study of the code, I was not sure if \mintinline{Clean}{System._Pointer} takes the Endian of an architecture into consideration.
 As such, I decided it was not within the scope of this assigment to figure this out.
 Instead I created a type synonym \mintinline{Clean}{:: RTIME :== Pointer} that would be used in the calculations.
-I overloaded this datatype in both < RTIME and - RTIME and used ccalls to calculate the results.
+I overloaded this datatype in both $<$ RTIME and $-$ RTIME and used ccalls to calculate the results.
 
 \section{Implementation}
-%TODO: Explain how the codes calculates the center of the pendulum, and how characters are represented/drawn
+\subsection{Direction}
+There are two possible locations of the pendulum; it is either to the left of the lichtsensor, or to the right.
+In the initialization stage of the process the current location of the pendulum is determined by getting the system time of three interruptions.
+If the t1 - t2 is smaller than t3 - t2 the pendulum must be on the LEFT side of the pendulum after t3.
+In the other case, it must be on the RIGHT side of the sensor.
+
+In Clean, I implemented this using an Algebraic DataType: \mintinline{Clean}{:: Direction = LEFT | RIGHT}.
+After that, the code always waits until the pendulum passes the sensor twice, allowing us to assume that the sensor is always on the right side.
+
+\subsection{Period}
+Unfortunately, due to the limitations mentioned above, the period cannot be completely calculated in Clean.
+Most of it, however, can.
+First, 8 bytes of space is allocated on the heap.
+After that, the process waits until the pendulum passes the sensor going right.
+The time is stored, and we then wait for it to pass going left.
+This time is then stored, and the difference is returned as the period.
+
+\subsection{LEDs}
+While the initialization (getting the filedescriptors) could be done in Clean, it would not have any advantage over just doing it in C.
+As such, the LEDs are initialized in C, and the filediscriptors are then passed to Clean.
+Initialization is done by the following function: \mintinline{Clean}{setupLEDS :: !*World -> (!Int, !*World)}.
+When calling a C-function from Clean, the C funtion must always return some value.
+Right now, the C-function always returns a 1. Ideally, however, the function would return any possible error code.
+
+Retrieving the file descriptors is done by mapping a function that retrieves the file descriptor given some LED Identifier: \mintinline{Clean}{setupLEDS :: !*World -> (!Int, !*World)}.
+Given that the *World must be passed, a mapSt must be used: \mintinline{Clean}{mapSt getFD leds world}.
+
+In order to distinguish between normal Integers and Integers that identify the LED file descriptors, I use a type synonym: \mintinline{Clean}{:: LED :== Integer}.
 
 \section{Acknowledgments}
 A special thanks to Camil Staps for helping me set up the compiler, and any other help he provided me.
