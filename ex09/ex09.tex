@@ -69,7 +69,7 @@ Clean is a language that makes use of a garbage collector and several other impl
 Unlike Java and C\#, this run time system is linked into final binary.
 Therefore, running any Clean program is preceded by that init system of the run time system.
 I noted before that it is possible to call Clean functions from C, while this is true, the run time system must be initialized before C can call a Clean function.
-With the help of Drs. van Groningen, I am currently trying to create a modified version of the run time system\footnote{github.com/ErinvanderVeen/C-to-Clean}, that allows you to initialize it from C.
+With the help of Drs. van Groningen, I am currently trying to create a modified version of the run time system\footnote{github.com/ErinvanderVeen/C-to-Clean}, that allows you to initialize it from C.\footnote{UPDATE: This method is working since 2017-10-07 but was not used due to the fact that it would require a complete rewrite of the program}
 This would mean that it would no longer be necesaary to start the program in Clean.
 
 \section{Xenomai Tasks and Threads}
@@ -114,9 +114,13 @@ This is due to the context that I mentioned earlier and cannot be helped without
 \end{enumerate}
 As mentioned before, both of these are as of yet outside the scope of this assigment.
 
-\section{Xthread}
-%TODO: Try to elevate the normal Clean thread to a xthread.
-%TODO: If impossible, explain what IS done to be as REAL time as possible.
+\section{Real Time Behaviour in a Non Real Time Thread}
+As mentioed above, it is (almost) impossible to run a real time thread from Clean.
+This does not prevent us from trying to emulate the behaviour of a real time thread however.
+Calling any \mintinline{C}{rt\_} function schedules the current thread on the Cobalt kernel.
+This allows us to reliably spin for a certain amount of time, without the possible delay of a normal kernel.
+
+Unfortunately the Alchemy API does not provide an interface to do a blocking read on the Cobalt kernel.
 
 \section{RTIME}
 The RTIME in the Alchemy API is a type alias for the unsigned long long.
