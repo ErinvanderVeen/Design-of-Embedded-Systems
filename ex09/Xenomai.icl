@@ -7,8 +7,6 @@ import System._Posix
 import StdBool
 import StdInt
 
-import StdDebug
-
 :: LED :== Int
 :: RTime :== Pointer
 
@@ -29,6 +27,21 @@ where
 	(-) p1 p2 = code {
 		ccall subtract "pp:p"
 	}
+
+divRTime :: !RTime !Int -> RTime
+divRTime p i = code {
+	ccall divRTime "pI:p"
+}
+
+multRTime :: !RTime !Int -> RTime
+multRTime p i = code {
+	ccall multRTime "pI:p"
+}
+
+getPixelTime :: RTime
+getPixelTime = code {
+	ccall get_pixel_time ":p"
+}
 
 // Waits for Interrupt, then returns the time at which the interrupt happend
 getInterruptTime :: !Pointer !Int !*World -> (!RTime, !*World)
@@ -65,8 +78,8 @@ getFD l w = code {
 }
 
 // Waits for the specified RTime
-spinTimer :: !RTime !Pointer !*World -> *World
-spinTimer rtime pointer world
+spinTimer :: !RTime !*World -> *World
+spinTimer rtime world
 #! (_, world) = spinTimer` rtime world
 = world
 where
@@ -78,7 +91,7 @@ where
 blinkLEDS :: ![LED] !*World -> (![LED], !*World)
 blinkLEDS leds world
 #! (leds, world) = mapSt ledON leds world
-#! (_, world) = usleep 0 world
+#! (_, world) = waitBlink world
 = mapSt ledOFF leds world
 where
 	ledON :: !LED !*World -> (!LED, !*World)
@@ -89,9 +102,9 @@ where
 	ledOFF led world = code {
 		ccall led_off "I:I:A"
 	}
-	usleep :: !Int !*World -> (!Int, !*World)
-	usleep i w = code {
-		ccall usleep "I:I:A"
+	waitBlink :: !*World -> (!Int, !*World)
+	waitBlink w = code {
+		ccall wait_blink ":I:A"
 	}
 
 printCharacter :: ![LED] ![[Bool]] !*World -> (![LED], !*World)

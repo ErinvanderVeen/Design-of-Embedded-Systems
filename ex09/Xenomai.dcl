@@ -10,10 +10,15 @@ instance < RTime
 
 instance - RTime
 
+divRTime :: !RTime !Int -> RTime
+multRTime :: !RTime !Int -> RTime
+
+getPixelTime :: RTime
+
 setupLEDS :: !*World -> (!Int, !*World)
 
 // Waits for the specified RTime
-spinTimer :: !RTime !Pointer !*World -> *World
+spinTimer :: !RTime !*World -> *World
 
 getInterruptTime :: !Pointer !Int !*World -> (!RTime, !*World)
 

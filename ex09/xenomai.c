@@ -17,9 +17,26 @@ int less_than(RTIME* p1, RTIME* p2) {
 	return *p1 < *p2;
 }
 
+RTIME* get_pixel_time() {
+	RTIME* res = malloc(8);
+	*res = 200000;
+	return res;
+}
+
+RTIME* multRTime(RTIME* p, int i) {
+	*p = *p * i;
+	return p;
+}
+
+RTIME* divRTime(RTIME* p, int i) {
+	*p = *p / i;
+	return p;
+}
+
 RTIME* subtract(RTIME* p1, RTIME* p2) {
-	*p1 = *p1 - *p2;
-	return p1;
+	RTIME* res = malloc(8);
+	*res = *p1 - *p2;
+	return res;
 }
 
 RTIME* get_timer(RTIME* time) {
@@ -37,10 +54,13 @@ int led_off(int fd) {
 	return fd;
 }
 
+int wait_blink() {
+	rt_timer_spin(200000);
+	return 1;
+}
+
 int spin_timer(RTIME* ct) {
-	
-	SRTIME ns = rt_timer_ticks2ns(*ct);
-	rt_timer_spin(ns / 400);
+	rt_timer_spin(*ct);
 	return 1;
 }
 

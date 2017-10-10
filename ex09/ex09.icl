@@ -5,42 +5,50 @@ import StdEnv
 import System._Pointer
 import System._Posix
 
-import StdDebug
-
 :: Direction = LEFT | RIGHT
+:: Period :== (RTime, RTime)
 
-interruptHandler :: !Pointer !Int !Direction !RTime ![LED] !*World -> *World
+interruptHandler :: !Pointer !Int !Direction !Period ![LED] !*World -> *World
 interruptHandler resultP fd direction period leds world
 = interruptHandler` fd resultP direction period leds world
 where
-	interruptHandler` :: !Int !Pointer !Direction !RTime ![LED] !*World -> *World
-	interruptHandler` fd resultP direction period leds world
+	interruptHandler` :: !Int !Pointer !Direction !Period ![LED] !*World -> *World
+	interruptHandler` fd resultP direction (lperiod, rperiod) leds world
 	#! world = waitForNextRight direction resultP fd world
-	#! world = spinTimer period resultP world
-	#! (_, world) = printCharacter leds e world
-	#! (_, world) = printCharacter leds r world
-	= interruptHandler` fd resultP RIGHT period leds world
+	#! world = spinTimer lperiod world
+	#! (_, world) = printCharacter leds x world
+	#! world = spinTimer rperiod world
+	#! (_, world) = printCharacter leds x world
+	= interruptHandler` fd resultP RIGHT (lperiod, rperiod) leds world
 	where
 		x = [[True, False, False, False, False, False, False, True],
-		      [False, True, False, False, False, False, True, False],
-		      [False, False, True, False, False, True, False, False],
-		      [False, False, False, True, True, False, False, False],
-		      [False, False, True, False, False, True, False, False],
-		      [False, True, False, False, False, False, True, False],
-		      [True, False, False, False, False, False, False, True]]
+		     [False, True, False, False, False, False, True, False],
+		     [False, False, True, False, False, True, False, False],
+		     [False, False, False, True, True, False, False, False],
+		     [False, False, True, False, False, True, False, False],
+		     [False, True, False, False, False, False, True, False],
+		     [True, False, False, False, False, False, False, True],
+		     [False, False, False, False, False, False, False, False]]
 		e = [[True, True, True, True, True, True, True, True],
-		      [True, False, False, True, False, False, False, True],
-		      [True, False, False, True, False, False, False, True],
-		      [True, False, False, True, False, False, False, True],
-		      [True, False, False, False, False, False, False, True],
-		      [True, False, False, False, False, False, False, True],
-		      [True, False, False, False, False, False, False, True]]
+		     [True, False, False, True, False, False, False, True],
+		     [True, False, False, True, False, False, False, True],
+		     [True, False, False, True, False, False, False, True],
+		     [True, False, False, False, False, False, False, True],
+		     [True, False, False, False, False, False, False, True],
+		     [True, False, False, False, False, False, False, True]]
 		r = [[True, True, True, True, True, True, True, True],
-		      [False, False, False, False, True, False, False, True],
-		      [False, False, False, True, True, False, False, True],
-		      [False, False, True, False, True, False, False, True],
-		      [False, True, False, False, True, False, False, True],
-		      [True, False, False, False, True, True, True, True]]
+		     [True, False, False, True, False, False, False, False],
+		     [True, False, False, True, True, False, False, False],
+		     [True, False, False, True, False, True, False, False],
+		     [True, False, False, True, False, False, True, False],
+		     [True, True, True, True, False, False, False, True]]
+		i = [[True, True, True, True, True, True, True, True]]
+		n = [[True, True, True, True, True, True, True, True],
+		     [False, True, False, False, False, False, False, False],
+		     [False, False, True, True, True, False, False, False],
+		     [False, False, False, False, True, True, False, False],
+		     [False, False, False, False, False, False, True, True],
+		     [True, True, True, True, True, True, True, True]]
 
 waitForNextRight :: !Direction !Pointer !Int !*World -> *World
 waitForNextRight RIGHT resultP fd world
@@ -59,26 +67,31 @@ getPendulumDirection resultP iFd world
 #! (t2, world) = getInterruptTime t2p iFd world
 #! (t3, world) = getInterruptTime resultP iFd world
 #! isLEFT = t2 - t1 < t3 - t2
-#! a = free t1p
-#! a = free t2p
 | isLEFT = (LEFT, world)
 = (RIGHT, world)
 
 // Direction at end = RIGHT
-getPeriod :: !Direction !Pointer !Int !*World -> (!RTime, !*World)
-getPeriod direction resP fd world
+getPeriod :: !Pointer !Int !*World -> (!RTime, !*World)
+getPeriod resP fd world
+#! t1p = malloc 8
+#! (t1, world) = getRTime t1p world
 #! t2p = malloc 8
-#! world = waitForNextRight direction resP fd world
-#! (t1, world) = getRTime resP world
-#! world = waitForNextRight RIGHT resP fd world
-#! (t2, world) = getRTime t2p world
-= (t2 - t1, world)
+#! (t2, world) = getInterruptTime t2p fd world
+= (divRTime (t2 - t1) 2, world)
 
 Start world
 #! resultP = malloc 8
 #! (iFd, world) = setupInterruptHandlerTask world
 #! (_, world) = setupLEDS world
 #! (direction, world) = getPendulumDirection resultP iFd world
-#! (period, world) = getPeriod direction resultP iFd world
+#! world = waitForNextRight direction resultP iFd world
+#! (rperiod, world) = getPeriod resultP iFd world
+#! (lperiod, world) = getPeriod resultP iFd world
+#! lwait = divRTime (rperiod - lperiod) 2
+#! rwait = multRTime (rperiod - lwait) 2
 #! (leds, world) = getFDs [0 .. 7] world
-= interruptHandler resultP iFd RIGHT period leds world
+#! pixeltime = getPixelTime
+#! pixeltime = multRTime pixeltime 7
+#! lwait2 = lwait - pixeltime
+#! rwait2 = rwait - pixeltime
+= interruptHandler resultP iFd RIGHT (lwait2, rwait2) leds world
