@@ -1,5 +1,108 @@
 #include "app.hpp"
 
+struct SharedMemory {
+	// IF NEEDED, this struct will store variables that must be shared between
+	// tasks
+};
+
+struct SensorData {
+	int touch_left;
+	int touch_right;
+
+	colorid_t color;
+
+	int16_t ultrasonic;
+};
+
+struct Sensors {
+	sensor_port_t TLEFT_P;
+	sensor_port_t COLOR_P;
+	sensor_port_t ULTRA_P;
+	sensor_port_t TRIGHT_P;
+
+	motor_port_t LEFT_P;
+	motor_port_t RIGHT_P;
+};
+
+class RobotAction {
+	public:
+		// Be careful with PASS! Sensor Data is not updated for the next action
+		enum Control { SKIP, BLOCK, PASS };
+		virtual Control takeControl(SensorData&) = 0;
+		virtual void perform(SensorData&) = 0;
+};
+
+#define NR_ACTIONS 2
+
+class Arbitrator {
+	public:
+		Arbitrator(SensorData&, Sensors&);
+		void start();
+		void apply(RobotAction*);
+
+	private:
+		uint8_t nr_of_actions = 0;
+		RobotAction* actions[NR_ACTIONS];
+		SensorData sensor_data;
+		Sensors sensors;
+		void update_sensor_data();
+};
+
+Arbitrator::Arbitrator(SensorData& sensor_data, Sensors& sensors) {
+	this->sensor_data = sensor_data;
+	this->sensors = sensors;
+}
+
+void Arbitrator::start() {
+	bool running = true;
+
+	RobotAction::Control control;
+	RobotAction* action;
+	uint8_t i;
+
+	while(running) {
+
+		// Read current values from sensors
+		// Actions that need access to the data, whould have been passed
+		// a reference to it in their constructor
+		update_sensor_data();
+
+
+		for (i = 0; i < NR_ACTIONS; i++) {
+			action = actions[i];
+			control = action->takeControl(sensor_data);
+
+			switch (control) {
+				case RobotAction::SKIP:
+					// Do nothing
+					break;
+				case RobotAction::BLOCK:
+					// Take action and stop loop
+					action->perform(sensor_data);
+					return;
+				case RobotAction::PASS:
+					// Take action and continue to the next potential action
+					action->perform(sensor_data);
+					break;
+			}
+		}
+	}
+	return;
+}
+
+void Arbitrator::apply(RobotAction* mode) {
+	actions[nr_of_actions] = mode;
+	nr_of_actions++;
+	return;
+}
+
+void Arbitrator::update_sensor_data() {
+	sensor_data.touch_left = ev3_touch_sensor_is_pressed(sensors.TLEFT_P);
+	sensor_data.touch_right = ev3_touch_sensor_is_pressed(sensors.TRIGHT_P);
+	sensor_data.color = ev3_color_sensor_get_color(sensors.COLOR_P);
+	sensor_data.ultrasonic = ev3_ultrasonic_sensor_get_distance(sensors.ULTRA_P);
+	return;
+}
 int32_t FONT_WIDTH, FONT_HEIGHT;
 
 SharedMemory shared_memory;

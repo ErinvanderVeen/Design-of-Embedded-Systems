@@ -1,25 +1,20 @@
-#ifndef ARBITRATOR_H
-#define ARBITRATOR_H
+#ifndef APP_H
+#define APP_H
+#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
+
+#include "ev3api.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "ev3api.h"
 
 #ifndef STACK_SIZE
 #define STACK_SIZE 4096
 #endif
 
 #ifndef TOPPERS_MACRO_ONLY
-
-#include <stdio.h>
-#include <unistd.h>
-#include <string.h>
-
-#include "arbitrator.hpp"
-#include "sensors.hpp"
-#include "shared_memory.hpp"
 
 #define sleep tslp_tsk
 
