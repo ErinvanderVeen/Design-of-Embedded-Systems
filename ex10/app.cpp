@@ -1,4 +1,6 @@
 #include "app.hpp"
+#include <iterator>
+#include <list>
 
 struct SharedMemory {
 	// IF NEEDED, this struct will store variables that must be shared between
@@ -32,8 +34,6 @@ class RobotAction {
 		virtual void perform(SensorData&) = 0;
 };
 
-#define NR_ACTIONS 2
-
 class Arbitrator {
 	public:
 		Arbitrator(SensorData&, Sensors&);
@@ -41,8 +41,7 @@ class Arbitrator {
 		void apply(RobotAction*);
 
 	private:
-		uint8_t nr_of_actions = 0;
-		RobotAction* actions[NR_ACTIONS];
+		std::list<RobotAction*> actions;
 		SensorData sensor_data;
 		Sensors sensors;
 		void update_sensor_data();
@@ -57,8 +56,6 @@ void Arbitrator::start() {
 	bool running = true;
 
 	RobotAction::Control control;
-	RobotAction* action;
-	uint8_t i;
 
 	while(running) {
 
@@ -67,9 +64,7 @@ void Arbitrator::start() {
 		// a reference to it in their constructor
 		update_sensor_data();
 
-
-		for (i = 0; i < NR_ACTIONS; i++) {
-			action = actions[i];
+		for (RobotAction* action : actions) {
 			control = action->takeControl(sensor_data);
 
 			switch (control) {
@@ -91,8 +86,7 @@ void Arbitrator::start() {
 }
 
 void Arbitrator::apply(RobotAction* mode) {
-	actions[nr_of_actions] = mode;
-	nr_of_actions++;
+	actions.push_back(mode);
 	return;
 }
 
