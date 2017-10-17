@@ -1,4 +1,5 @@
 #include "app.hpp"
+
 #include <iterator>
 #include <list>
 
@@ -16,6 +17,7 @@ struct SensorData {
 	int16_t ultrasonic;
 };
 
+// Should not be called "Sensors"
 struct Sensors {
 	sensor_port_t TLEFT_P;
 	sensor_port_t COLOR_P;
@@ -31,7 +33,49 @@ class RobotAction {
 		// Be careful with PASS! Sensor Data is not updated for the next action
 		enum Control { SKIP, BLOCK, PASS };
 		virtual Control takeControl(SensorData&) = 0;
-		virtual void perform(SensorData&) = 0;
+		virtual void perform(SensorData&, Sensors&) = 0;
+		virtual void printName() = 0;
+};
+
+class WalkAction : public RobotAction {
+	public:
+		Control takeControl(SensorData& sensor_data) {
+			return PASS;
+		}
+
+		void perform(SensorData& sensor_data, Sensors& sensors) {
+			ev3_motor_set_power(sensors.LEFT_P, 20);
+			ev3_motor_set_power(sensors.RIGHT_P, 20);
+			sleep(50);
+		}
+		
+		void printName() {
+			ev3_print(0, "Walk");
+		}
+};
+
+class AvoidAction : public RobotAction {
+	public:
+		Control takeControl(SensorData& sensor_data) {
+			if(sensor_data.color == COLOR_BLACK
+					|| sensor_data.ultrasonic <= 30
+					|| sensor_data.touch_left == 1
+					|| sensor_data.touch_right == 1)
+				return BLOCK;
+			return SKIP;
+		}
+
+		void perform(SensorData& sensor_data, Sensors& sensors) {
+			ev3_motor_set_power(sensors.LEFT_P, -20);
+			ev3_motor_set_power(sensors.RIGHT_P, -40);
+			sleep(1000);
+			ev3_motor_stop(sensors.LEFT_P, true);
+			ev3_motor_stop(sensors.RIGHT_P, true);
+		}
+
+		void printName() {
+			ev3_print(0, "Avoid");
+		}
 };
 
 class Arbitrator {
@@ -41,6 +85,7 @@ class Arbitrator {
 		void apply(RobotAction*);
 
 	private:
+		void assess_actions(RobotAction::Control& control);
 		std::list<RobotAction*> actions;
 		SensorData sensor_data;
 		Sensors sensors;
@@ -64,25 +109,31 @@ void Arbitrator::start() {
 		// a reference to it in their constructor
 		update_sensor_data();
 
-		for (RobotAction* action : actions) {
-			control = action->takeControl(sensor_data);
+		assess_actions(control);
 
-			switch (control) {
-				case RobotAction::SKIP:
-					// Do nothing
-					break;
-				case RobotAction::BLOCK:
-					// Take action and stop loop
-					action->perform(sensor_data);
-					return;
-				case RobotAction::PASS:
-					// Take action and continue to the next potential action
-					action->perform(sensor_data);
-					break;
-			}
-		}
 	}
 	return;
+}
+
+void Arbitrator::assess_actions(RobotAction::Control& control) {
+	for (RobotAction* action : actions) {
+		action->printName();
+		control = action->takeControl(sensor_data);
+
+		switch (control) {
+			case RobotAction::SKIP:
+				// Do nothing
+				break;
+			case RobotAction::BLOCK:
+				// Take action and stop loop
+				action->perform(sensor_data, sensors);
+				return;
+			case RobotAction::PASS:
+				// Take action and continue to the next potential action
+				action->perform(sensor_data, sensors);
+				break;
+		}
+	}
 }
 
 void Arbitrator::apply(RobotAction* mode) {
@@ -114,6 +165,11 @@ void main_task(intptr_t unused) {
 	Arbitrator arbitrator(sensor_data, sensors);
 
 	// TODO: Create RobotActions and apply to arbitrator
+	AvoidAction aa;
+	WalkAction wa;
+
+	arbitrator.apply(&aa);
+	arbitrator.apply(&wa);
 
 	arbitrator.start();
 	return;
