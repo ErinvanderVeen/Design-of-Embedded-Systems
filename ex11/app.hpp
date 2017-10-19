@@ -4,13 +4,14 @@ extern "C" {
 
 #pragma once
 
+#include "ev3api.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include "platform_interface_layer.h"
+#include "driver_interface_bluetooth.h"
+#include "driver_interface_filesys.h"
 #include "syssvc/serial.h"
-
-#include "ev3api.h"
 
 #ifndef STACK_SIZE
 #define STACK_SIZE 4096

@@ -176,7 +176,6 @@ void Arbitrator::assess_actions(RobotAction::Control& control) {
 
 void Arbitrator::apply(RobotAction* mode) {
 	actions.push_back(mode);
-	return;
 }
 
 void Arbitrator::update_sensor_data() {
@@ -184,7 +183,6 @@ void Arbitrator::update_sensor_data() {
 	sensor_data.touch_right = ev3_touch_sensor_is_pressed(sensors.TRIGHT_P);
 	sensor_data.color = ev3_color_sensor_get_color(sensors.COLOR_P);
 	sensor_data.ultrasonic = ev3_ultrasonic_sensor_get_distance(sensors.ULTRA_P);
-	return;
 }
 int32_t FONT_WIDTH, FONT_HEIGHT, NLINES;
 uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB4, 0xC7, 0x4E };
@@ -212,7 +210,7 @@ void btConnect() {
 			if (bt_con != NULL) {
 				setbuf(bt_con, NULL);
 				while (!isConnected()) {
-					cycle_print("Connecting...");
+					cycle_print((char*)"Connecting...");
 					spp_master_test_connect(slave_address, pin);
 					sleep(1000);
 				}
@@ -220,7 +218,7 @@ void btConnect() {
 			}
 		} else {
 			while (!ev3_bluetooth_is_connected()) {
-				cycle_print("Waiting for connection...");
+				cycle_print((char*)"Waiting for connection...");
 				sleep(1000);
 			}
 			bt_con = ev3_serial_open_file(EV3_SERIAL_BT);
@@ -228,8 +226,8 @@ void btConnect() {
 		}
 		sleep(1000);
 	}
-	cycle_print("Connected.");
-	act_tsk(BT_TASK);
+	cycle_print((char*)"Connected.");
+	act_tsk(BT_RECV_TASK);
 }
 
 void set_font(lcdfont_t font) {
@@ -256,9 +254,9 @@ void init() {
 	};
 
 	colors = {
-		yellow = 0;
-		blue = 0;
-		red = 0;
+		.yellow = 0,
+		.blue = 0,
+		.red = 0
 	};
 
 	set_font(EV3_FONT_MEDIUM);
@@ -298,7 +296,7 @@ void main_task(intptr_t unused) {
 
 void bt_recv_task(intptr_t unused) {
 	char recv;
-	while ((recv = fgets(buf, 16, bt_con))) {
+	while ((recv = fgetc(bt_con))) {
 		switch(recv) {
 			case 'y':
 				colors.yellow = 1;
