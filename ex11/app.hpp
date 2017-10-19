@@ -19,7 +19,7 @@ extern "C" {
 
 #ifndef TOPPERS_MACRO_ONLY
 
-#define sleep(x) tslp_tsk(1000 * x)
+#define sleep(x) tslp_tsk(x)
 #define wakeup wup_tsk
 
 #define ev3_print(x, s) ev3_lcd_draw_string(s, 0, x * FONT_HEIGHT)
