@@ -51,7 +51,7 @@ class RobotAction {
 
 class WalkAction : public RobotAction {
 	public:
-		WalkAction(SharedMemory& sm, SensorData& sd, Sensors& s)
+	WalkAction(SharedMemory& sm, SensorData& sd, Sensors& s)
 			: RobotAction(sm, sd, s) {}
 
 		ID taskID() {
@@ -65,7 +65,6 @@ class WalkAction : public RobotAction {
 		void perform() {
 			ev3_motor_set_power(RobotAction::sensors.LEFT_P, 20);
 			ev3_motor_set_power(RobotAction::sensors.RIGHT_P, 20);
-			sleep(50);
 		}
 
 		void printName() {
@@ -91,17 +90,24 @@ class ColorAction : public RobotAction {
 		void perform() {
 			switch(RobotAction::sensor_data.color) {
 				case COLOR_YELLOW:
+					RobotAction::shared_memory.yellow = 1;
 					fputc('y', RobotAction::shared_memory.bt_con);
 					break;
 				case COLOR_BLUE:
+					RobotAction::shared_memory.blue = 1;
 					fputc('b', RobotAction::shared_memory.bt_con);
 					break;
 				case COLOR_RED:
+					RobotAction::shared_memory.red = 1;
 					fputc('r', RobotAction::shared_memory.bt_con);
 					break;
 				default:
 					break;
 			}
+			if (RobotAction::shared_memory.yellow == 1
+					&& RobotAction::shared_memory.blue == 1
+					&& RobotAction::shared_memory.red == 1)
+				act_tsk(FIN_TASK);
 		}
 
 		void printName() {
@@ -188,14 +194,16 @@ void Arbitrator::assess_actions(RobotAction::Control& control) {
 				break;
 			case RobotAction::BLOCK:
 				// Take action and stop loop
-				wup_tsk(action->taskID());
+				wakeup(action->taskID());
+				cycle_print((char*)"WAKING UP A TASK");
 				return;
 			case RobotAction::PASS:
 				// Take action and continue to the next potential action
-				wup_tsk(action->taskID());
+				wakeup(action->taskID());
+				cycle_print((char*)"WAKING UP A TASK");
 				break;
 		}
-		sleep(50);
+		sleep(500);
 	}
 }
 
@@ -210,11 +218,11 @@ void Arbitrator::update_sensor_data() {
 	sensor_data.ultrasonic = ev3_ultrasonic_sensor_get_distance(sensors.ULTRA_P);
 }
 int32_t FONT_WIDTH, FONT_HEIGHT, NLINES;
-uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB4, 0xC7, 0x4E };
+uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB2, 0x56, 0x99 };
 const char* pin = "0000";
-bool_t is_master = true;
+bool_t  is_master = true;
 
-int line = 0;
+static int line = 0;
 
 AvoidAction* aa;
 ColorAction* ca;
@@ -269,6 +277,8 @@ void cycle_print(char* message) {
 }
 
 void init(SharedMemory& shared_memory, SensorData& sensor_data, Sensors& sensors) {
+	NLINES = 8;
+
 	sensors = {
 		.TLEFT_P = EV3_PORT_1,
 		.COLOR_P = EV3_PORT_2,
@@ -359,12 +369,14 @@ void bt_recv_task(intptr_t unused) {
 				&& shared_memory_p->blue == 1
 				&& shared_memory_p->red == 1)
 			act_tsk(FIN_TASK);
+		cycle_print((char*)"Bluetooth Task");
 		sleep(500);
 	}
 }
 
 void avoid_task(intptr_t){
 	while(1) {
+		cycle_print((char*)"Sleep Avoid");
 		slp_tsk();
 		aa->perform();
 	}
@@ -372,6 +384,7 @@ void avoid_task(intptr_t){
 
 void color_task(intptr_t){
 	while(1) {
+		cycle_print((char*)"Sleep Color");
 		slp_tsk();
 		ca->perform();
 	}
@@ -379,6 +392,7 @@ void color_task(intptr_t){
 
 void walk_task(intptr_t){
 	while(1) {
+		cycle_print((char*)"Sleep Walk");
 		slp_tsk();
 		wa->perform();
 	}
