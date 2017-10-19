@@ -4,15 +4,10 @@
 #include <list>
 
 struct SharedMemory {
-	// IF NEEDED, this struct will store variables that must be shared between
-	// tasks
-};
-
-// Holds if the collors are seen
-struct Colors {
 	uint8_t yellow;
 	uint8_t blue;
 	uint8_t red;
+	FILE* bt_con;
 };
 
 struct SensorData {
@@ -37,27 +32,39 @@ struct Sensors {
 
 class RobotAction {
 	public:
+		RobotAction(SharedMemory& sm, SensorData& sd, Sensors& s) {
+			shared_memory = sm;
+			sensor_data = sd;
+			sensors = s;
+		}
 		// Be careful with PASS! Sensor Data is not updated for the next action
 		enum Control { SKIP, BLOCK, PASS };
 		virtual ID taskID() = 0;
-		virtual Control takeControl(SensorData&) = 0;
-		virtual void perform(SensorData&, Sensors&) = 0;
+		virtual Control takeControl() = 0;
+		virtual void perform() = 0;
 		virtual void printName() = 0;
+
+		SharedMemory shared_memory;
+		SensorData sensor_data;
+		Sensors sensors;
 };
 
 class WalkAction : public RobotAction {
 	public:
+		WalkAction(SharedMemory& sm, SensorData& sd, Sensors& s)
+			: RobotAction(sm, sd, s) {}
+
 		ID taskID() {
 			return WALK_TASK;
 		}
 
-		Control takeControl(SensorData& sensor_data) {
+		Control takeControl() {
 			return PASS;
 		}
 
-		void perform(SensorData& sensor_data, Sensors& sensors) {
-			ev3_motor_set_power(sensors.LEFT_P, 20);
-			ev3_motor_set_power(sensors.RIGHT_P, 20);
+		void perform() {
+			ev3_motor_set_power(RobotAction::sensors.LEFT_P, 20);
+			ev3_motor_set_power(RobotAction::sensors.RIGHT_P, 20);
 			sleep(50);
 		}
 
@@ -68,18 +75,33 @@ class WalkAction : public RobotAction {
 
 class ColorAction : public RobotAction {
 	public:
+		ColorAction(SharedMemory& sm, SensorData& sd, Sensors& s)
+			: RobotAction(sm, sd, s) {}
+
 		ID taskID() {
 			return COLOR_TASK;
 		}
 
-		Control takeControl(SensorData& sensor_data) {
-			if(sensor_data.color != COLOR_WHITE)
+		Control takeControl() {
+			if(RobotAction::sensor_data.color != COLOR_WHITE)
 				return PASS; // We should still walk after detecting a color
 			return SKIP;
 		}
 
-		void perform(SensorData& sensor_data, Sensors& sensors) {
-			// TODO: Send color to MASTER
+		void perform() {
+			switch(RobotAction::sensor_data.color) {
+				case COLOR_YELLOW:
+					fputc('y', RobotAction::shared_memory.bt_con);
+					break;
+				case COLOR_BLUE:
+					fputc('b', RobotAction::shared_memory.bt_con);
+					break;
+				case COLOR_RED:
+					fputc('r', RobotAction::shared_memory.bt_con);
+					break;
+				default:
+					break;
+			}
 		}
 
 		void printName() {
@@ -89,25 +111,28 @@ class ColorAction : public RobotAction {
 
 class AvoidAction : public RobotAction {
 	public:
+		AvoidAction(SharedMemory& sm, SensorData& sd, Sensors& s)
+			: RobotAction(sm, sd, s) {}
+
 		ID taskID() {
 			return AVOID_TASK;
 		}
 
-		Control takeControl(SensorData& sensor_data) {
-			if(sensor_data.color == COLOR_BLACK
-					|| sensor_data.ultrasonic <= 30
-					|| sensor_data.touch_left == 1
-					|| sensor_data.touch_right == 1)
+		Control takeControl() {
+			if(RobotAction::sensor_data.color == COLOR_BLACK
+					|| RobotAction::sensor_data.ultrasonic <= 30
+					|| RobotAction::sensor_data.touch_left == 1
+					|| RobotAction::sensor_data.touch_right == 1)
 				return BLOCK;
 			return SKIP;
 		}
 
-		void perform(SensorData& sensor_data, Sensors& sensors) {
-			ev3_motor_set_power(sensors.LEFT_P, -20);
-			ev3_motor_set_power(sensors.RIGHT_P, -40);
+		void perform() {
+			ev3_motor_set_power(RobotAction::sensors.LEFT_P, -20);
+			ev3_motor_set_power(RobotAction::sensors.RIGHT_P, -40);
 			sleep(1000);
-			ev3_motor_stop(sensors.LEFT_P, true);
-			ev3_motor_stop(sensors.RIGHT_P, true);
+			ev3_motor_stop(RobotAction::sensors.LEFT_P, true);
+			ev3_motor_stop(RobotAction::sensors.RIGHT_P, true);
 		}
 
 		void printName() {
@@ -155,7 +180,7 @@ void Arbitrator::start() {
 void Arbitrator::assess_actions(RobotAction::Control& control) {
 	for (RobotAction* action : actions) {
 		action->printName();
-		control = action->takeControl(sensor_data);
+		control = action->takeControl();
 
 		switch (control) {
 			case RobotAction::SKIP:
@@ -187,15 +212,16 @@ void Arbitrator::update_sensor_data() {
 int32_t FONT_WIDTH, FONT_HEIGHT, NLINES;
 uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB4, 0xC7, 0x4E };
 const char* pin = "0000";
-static FILE* bt_con;
 bool_t is_master = true;
 
 int line = 0;
 
-SharedMemory shared_memory;
-SensorData sensor_data;
-Sensors sensors;
-Colors colors;
+AvoidAction* aa;
+ColorAction* ca;
+WalkAction* wa;
+
+Sensors* sensor_p;
+SharedMemory* shared_memory_p;
 
 bool_t isConnected() {
 	T_SERIAL_RPOR rpor;
@@ -203,12 +229,12 @@ bool_t isConnected() {
 	return ercd == E_OK;
 }
 
-void btConnect() {
+void btConnect(SharedMemory& shared_memory) {
 	while(true) {
 		if (is_master) {
-			bt_con = fdopen(SIO_PORT_SPP_MASTER_TEST_FILENO, "a+");
-			if (bt_con != NULL) {
-				setbuf(bt_con, NULL);
+			shared_memory.bt_con = fdopen(SIO_PORT_SPP_MASTER_TEST_FILENO, "a+");
+			if (shared_memory.bt_con != NULL) {
+				setbuf(shared_memory.bt_con, NULL);
 				while (!isConnected()) {
 					cycle_print((char*)"Connecting...");
 					spp_master_test_connect(slave_address, pin);
@@ -221,7 +247,7 @@ void btConnect() {
 				cycle_print((char*)"Waiting for connection...");
 				sleep(1000);
 			}
-			bt_con = ev3_serial_open_file(EV3_SERIAL_BT);
+			shared_memory.bt_con = ev3_serial_open_file(EV3_SERIAL_BT);
 			break;
 		}
 		sleep(1000);
@@ -242,7 +268,7 @@ void cycle_print(char* message) {
 	ev3_print(printLine, message);
 }
 
-void init() {
+void init(SharedMemory& shared_memory, SensorData& sensor_data, Sensors& sensors) {
 	sensors = {
 		.TLEFT_P = EV3_PORT_1,
 		.COLOR_P = EV3_PORT_2,
@@ -253,11 +279,13 @@ void init() {
 		.RIGHT_P = EV3_PORT_D
 	};
 
-	colors = {
-		.yellow = 0,
-		.blue = 0,
-		.red = 0
-	};
+	shared_memory.yellow = 0;
+	shared_memory.blue = 0;
+	shared_memory.red = 0;
+
+	// To allow access from other tasks
+	sensor_p = &sensors;
+	shared_memory_p = &shared_memory;
 
 	set_font(EV3_FONT_MEDIUM);
 	//	Motor init
@@ -269,47 +297,68 @@ void init() {
 	ev3_sensor_config(sensors.TLEFT_P, TOUCH_SENSOR);
 	ev3_sensor_config(sensors.TRIGHT_P, TOUCH_SENSOR);
 
-	btConnect();
+	btConnect(shared_memory);
 }
 
-AvoidAction aa;
-ColorAction ca;
-WalkAction wa;
-
 void main_task(intptr_t unused) {
-	init();
+
+	SharedMemory shared_memory = SharedMemory();
+	SensorData sensor_data = SensorData();
+	Sensors sensors = Sensors();
+
+	aa = new AvoidAction(shared_memory, sensor_data, sensors);
+	ca = new ColorAction(shared_memory, sensor_data, sensors);
+	wa = new WalkAction(shared_memory, sensor_data, sensors);
+
+	init(shared_memory, sensor_data, sensors);
 
 	Arbitrator arbitrator(sensor_data, sensors);
 
 	// Start the tasks, will sleep imidiatly
-	act_tsk(aa.taskID());
-	act_tsk(ca.taskID());
-	act_tsk(wa.taskID());
+	act_tsk(aa->taskID());
+	act_tsk(ca->taskID());
+	act_tsk(wa->taskID());
 
-	arbitrator.apply(&aa);
-	arbitrator.apply(&ca);
-	arbitrator.apply(&wa);
+	arbitrator.apply(aa);
+	arbitrator.apply(ca);
+	arbitrator.apply(wa);
 
 	arbitrator.start();
 	return;
 }
 
+void fin_task(intptr_t unused) {
+	ter_tsk(BT_RECV_TASK);
+	ter_tsk(MAIN_TASK);
+
+	ter_tsk(AVOID_TASK);
+	ter_tsk(COLOR_TASK);
+	ter_tsk(WALK_TASK);
+
+	ev3_motor_stop(sensor_p->LEFT_P, true);
+	ev3_motor_stop(sensor_p->RIGHT_P, true);
+}
+
 void bt_recv_task(intptr_t unused) {
 	char recv;
-	while ((recv = fgetc(bt_con))) {
+	while ((recv = fgetc(shared_memory_p->bt_con))) {
 		switch(recv) {
 			case 'y':
-				colors.yellow = 1;
+				shared_memory_p->yellow = 1;
 				break;
 			case 'b':
-				colors.blue = 1;
+				shared_memory_p->blue = 1;
 				break;
 			case 'r':
-				colors.red = 1;
+				shared_memory_p->red = 1;
 				break;
 			default:
 				break;
 		}
+		if (shared_memory_p->yellow == 1
+				&& shared_memory_p->blue == 1
+				&& shared_memory_p->red == 1)
+			act_tsk(FIN_TASK);
 		sleep(500);
 	}
 }
@@ -317,20 +366,20 @@ void bt_recv_task(intptr_t unused) {
 void avoid_task(intptr_t){
 	while(1) {
 		slp_tsk();
-		aa.perform(sensor_data, sensors);
+		aa->perform();
 	}
 }
 
 void color_task(intptr_t){
 	while(1) {
 		slp_tsk();
-		ca.perform(sensor_data, sensors);
+		ca->perform();
 	}
 }
 
 void walk_task(intptr_t){
 	while(1) {
 		slp_tsk();
-		wa.perform(sensor_data, sensors);
+		wa->perform();
 	}
 }

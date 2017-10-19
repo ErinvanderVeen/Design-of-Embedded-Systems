@@ -48,6 +48,8 @@ extern void cycle_print(char*);
  * Tasks
  * IN ORDER OF PRIORITY
  */
+// Kills all other tasks
+extern void fin_task(intptr_t);
 // Recieves bluetooth communications
 extern void bt_recv_task(intptr_t);
 // Runs Aribitrator and updates sensors
