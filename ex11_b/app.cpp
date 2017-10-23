@@ -31,7 +31,6 @@ const char* pin = "0000";
 static FILE *bt_con;
 bool_t is_master = false;
 
-
 int red, yellow, blue; 
 
 int line = 0;
@@ -42,7 +41,6 @@ void main_task(intptr_t unused) {
     read_sensors(1);
     while(1)
     {
-
         ev3_led_set_color(LED_GREEN);
         ev3_motor_set_power(LEFT_P, DRIVE_SPEED);
         ev3_motor_set_power(RIGHT_P, DRIVE_SPEED);
@@ -57,14 +55,14 @@ void main_task(intptr_t unused) {
             ev3_led_set_color(LED_RED);
             avoid();
         }
-        if(ultrasonic <=40) //object detected
+        if(ultrasonic <=30) //object detected
         {
             ev3_led_set_color(LED_ORANGE);
             avoid();
         }
 
         detect_colors();
-        is_mission_accomplished();
+        if(is_mission_accomplished()) break;
 
         sleep(100);
         read_sensors(1);
@@ -72,8 +70,8 @@ void main_task(intptr_t unused) {
 }
 
 void bt_task(intptr_t unused) {
-    static char buf[3];
-    while (fgets(buf, 3, bt_con)) {
+    static char buf[16];
+    while (fgets(buf, 16, bt_con)) {
 
         // reading from other robot.
         // keep values of red, yellow and blue up-to-date. 
@@ -83,24 +81,24 @@ void bt_task(intptr_t unused) {
             case 'r':
                     red = 1;
                     cycle_print((char*)"Red found!");
-                    ev3_speaker_play_tone(250, 500);
+                    ev3_speaker_play_tone(250, 200);
                     break;
             case 'y':
                     yellow = 1;
                     cycle_print((char*)"Yellow found!");
-                    ev3_speaker_play_tone(250, 500);
+                    ev3_speaker_play_tone(250, 200);
                     break;
             case 'b':
                     blue = 1;
                     cycle_print((char*)"Blue found!");
-                    ev3_speaker_play_tone(250, 500);
-
+                    ev3_speaker_play_tone(250, 200);
+                    break;
             default:
                     break;
         }
         
-        cycle_print(buf);
-        is_mission_accomplished();
+       // cycle_print(buf);
+       //if(is_mission_accomplished()) break;
         dly_tsk(500);
     }
 }
@@ -203,7 +201,7 @@ void detect_colors()
         //red found
         fprintf(bt_con,"%s", "r\n"); //notify other robot.
         cycle_print((char*)"Red found!");
-        ev3_speaker_play_tone(250, 500);
+        ev3_speaker_play_tone(250, 200);
     } 
     if(color == COLOR_YELLOW && yellow == 0)
     {
@@ -211,7 +209,7 @@ void detect_colors()
         //yellow found
         fprintf(bt_con,"%s", "y\n"); //notify other robot.
         cycle_print((char*)"Yellow found!");
-        ev3_speaker_play_tone(250, 500);
+        ev3_speaker_play_tone(250, 200);
     } 
     if(color == COLOR_BLUE && blue == 0)
     {
@@ -219,21 +217,28 @@ void detect_colors()
         //blue found
         fprintf(bt_con,"%s", "b\n"); //notify other robot.
         cycle_print((char*)"Blue found!");
-        ev3_speaker_play_tone(250, 500);
+        ev3_speaker_play_tone(250, 200);
     } 
 }
-void is_mission_accomplished()
+int is_mission_accomplished()
 {
     //Check if all the colors have value 1.
     if(red == 1 && yellow == 1 && blue == 1) 
     {
+    //notify other robot that all colors are found.
+    //fprintf(bt_con, "%s", "x\n");
     //stop motors
 	ev3_motor_stop(LEFT_P, true);
     ev3_motor_stop(RIGHT_P, true);
     //set led color to green, play tone and print success message.
     ev3_led_set_color(LED_GREEN);
-    ev3_speaker_play_tone(250, 500);
-    cycle_print((char*)"Colors found. Mission Accomplished!");
+    ev3_speaker_play_tone(250, 1000);
+    cycle_print((char*)"Colors found!!!");
+    return 1;
     }
-    
+    return 0;
+}
+void close_app(intptr_t btn) {
+	do_exit = true;
+	ev3_print(5, "Finishing..");
 }
