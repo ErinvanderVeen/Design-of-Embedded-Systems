@@ -26,10 +26,10 @@ do_exit = false;
 colorid_t color;
 int16_t ultrasonic = 0;
 
-uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB2, 0x56, 0x99 };
+uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB2, 0x6C, 0x86 };
 const char* pin = "0000";
 static FILE *bt_con;
-bool_t is_master = false;
+bool_t is_master = true;
 
 int red, yellow, blue; 
 
@@ -55,7 +55,7 @@ void main_task(intptr_t unused) {
             ev3_led_set_color(LED_RED);
             avoid();
         }
-        if(ultrasonic <=30) //object detected
+        if(ultrasonic <=30) //object detected, try avoiding it
         {
             ev3_led_set_color(LED_ORANGE);
             avoid();
@@ -70,35 +70,31 @@ void main_task(intptr_t unused) {
 }
 
 void bt_task(intptr_t unused) {
-    static char buf[16];
-    while (fgets(buf, 16, bt_con)) {
+
+    static char c;
+    while ((c = fgetc(bt_con))) {
 
         // reading from other robot.
         // keep values of red, yellow and blue up-to-date. 
 
-        switch(*buf)
+        if(!red && c == 'r')
         {
-            case 'r':
                     red = 1;
-                    cycle_print((char*)"Red found!");
+                    cycle_print((char*)"Red received!");
                     ev3_speaker_play_tone(250, 200);
-                    break;
-            case 'y':
+        } else if(!yellow && c == 'y')
+        {
                     yellow = 1;
-                    cycle_print((char*)"Yellow found!");
+                    cycle_print((char*)"Yellow received!");
                     ev3_speaker_play_tone(250, 200);
-                    break;
-            case 'b':
+        } else if(!blue && c == 'b')
+        {
                     blue = 1;
-                    cycle_print((char*)"Blue found!");
+                    cycle_print((char*)"Blue received!");
                     ev3_speaker_play_tone(250, 200);
-                    break;
-            default:
-                    break;
+                  
         }
         
-       // cycle_print(buf);
-       //if(is_mission_accomplished()) break;
         dly_tsk(500);
     }
 }
@@ -195,15 +191,15 @@ void detect_colors()
        by the robot and the respective color hasn't been found before (equal to 0).
     */    
 
-    if(color == COLOR_RED && red == 0)
+    if(color == COLOR_RED && !red)
     {
-        red= 1;
+        red = 1;
         //red found
         fprintf(bt_con,"%s", "r\n"); //notify other robot.
         cycle_print((char*)"Red found!");
         ev3_speaker_play_tone(250, 200);
     } 
-    if(color == COLOR_YELLOW && yellow == 0)
+    if(color == COLOR_YELLOW && !yellow)
     {
         yellow = 1;
         //yellow found
@@ -211,7 +207,7 @@ void detect_colors()
         cycle_print((char*)"Yellow found!");
         ev3_speaker_play_tone(250, 200);
     } 
-    if(color == COLOR_BLUE && blue == 0)
+    if(color == COLOR_BLUE && !blue)
     {
         blue = 1;
         //blue found
@@ -225,8 +221,6 @@ int is_mission_accomplished()
     //Check if all the colors have value 1.
     if(red == 1 && yellow == 1 && blue == 1) 
     {
-    //notify other robot that all colors are found.
-    //fprintf(bt_con, "%s", "x\n");
     //stop motors
 	ev3_motor_stop(LEFT_P, true);
     ev3_motor_stop(RIGHT_P, true);
