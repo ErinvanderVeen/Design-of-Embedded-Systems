@@ -1,0 +1,10 @@
+Game testGame
+
+Field: width: 20 height: 10
+
+Rules:
+Rule: Cell becomes alive if number of alive neighbors is 3
+Rule: Cell lives if number of alive neighbors is 2
+Rule: Cell lives if number of alive neighbors is 3
+Rule: Cell dies if number of alive neighbors is 4 or more
+Rule: Cell dies if number of alive neighbors is 2 or less

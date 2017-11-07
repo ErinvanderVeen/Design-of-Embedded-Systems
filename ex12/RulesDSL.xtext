@@ -1,0 +1,44 @@
+grammar org.gameoflife.rules.RulesDSL with org.eclipse.xtext.common.Terminals
+
+generate rulesDSL "http://www.gameoflife.org/rules/RulesDSL"
+
+Game:
+	'Game' name = ID
+	(field = Field)?
+	// Rules that are defined last have the highest priority if
+	// they contradict each other
+	'Rules:' rules += Rule+
+;
+
+Field:
+	'Field:'
+	'width:' width = INT
+	'height:' height = INT
+;
+
+Rule:
+	'Rule:' 'Cell'
+	transition = Transition
+	'if' 'number' 'of' 'alive' 'neighbors' 'is'
+	condition = Condition
+;
+
+enum Transition:
+	ToAlive = 'becomes alive' |
+	Lives = 'lives' |
+	Dies = 'dies' 
+;
+
+Condition:
+	number = INT
+	(comparison = Comparison)?
+;
+
+enum Comparison:
+	// We do not want a key word for the comparison
+	// But the exactly should be implicit
+	// Therefore, it is placed at the top
+	Exactly = 'exactly' |
+	OrLess = 'or less' |
+	OrMore = 'or more'
+;
