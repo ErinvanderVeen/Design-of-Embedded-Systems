@@ -1,0 +1,31 @@
+grammar gameOfLife.RulesDSL with org.eclipse.xtext.common.Terminals
+
+generate rulesDSL "http://www.RulesDSL.gameOfLife"
+	
+Game: 'Game' name= ID 
+		grid = Grid
+	   'Rules' rules += Rule+;
+
+Grid: 'Grid'
+	  'Width' width = INT
+	  'Height' height = INT;
+
+Rule: 'Cell' 
+	   'InitialState:' initstate = State
+	   ('Operator:' operator = Operator)? 
+	   'AliveNeighbours:' neighbours += Neighbours+ 
+	   'EndState:' endstate = State;
+
+Neighbours: 
+	INT;
+
+enum State:
+	Alive = 'Alive' | Dead = 'Dead';
+	
+enum Operator: 
+	Exactly = 'exactly' |
+	Fewer = 'fewer than' |
+	Greater = 'greater than';
+	
+
+		
