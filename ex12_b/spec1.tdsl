@@ -5,7 +5,7 @@ Grid Width 20 Height 20
 Rules
 
 Cell InitialState: Dead 
-	 AliveNeighbours: 3 4 
+	 AliveNeighbours: 3 
 	 EndState: Alive 
 	 
 Cell InitialState: Alive 

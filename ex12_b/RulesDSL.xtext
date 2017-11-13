@@ -13,7 +13,7 @@ Grid: 'Grid'
 Rule: 'Cell' 
 	   'InitialState:' initstate = State
 	   ('Operator:' operator = Operator)? 
-	   'AliveNeighbours:' neighbours += Neighbours+ 
+	   'AliveNeighbours:' neighbours = Neighbours 
 	   'EndState:' endstate = State;
 
 Neighbours: 
