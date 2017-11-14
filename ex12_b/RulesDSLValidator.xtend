@@ -37,7 +37,7 @@ class RulesDSLValidator extends AbstractRulesDSLValidator {
 				
 				if(posList.get(i).x.equals(posList.get(j).x) && posList.get(i).y.equals(posList.get(j).y))
 				
-				error("Identical coordinates are not allowed", Literals.GAME__POSITIONS);
+				error("Identical coordinates are not allowed", Literals.GAME__POSITIONS, j);
 				
 			}
 		}
