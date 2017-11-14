@@ -42,4 +42,21 @@ class RulesDSLValidator extends AbstractRulesDSLValidator {
 			}
 		}
 	}
+	@Check
+	def checkIdenticalRules(Game root)
+	{
+		var ruleList = root.rules
+		for(var i=0; i < ruleList.size; i++){
+			for(var j=i+1; j < ruleList.size; j++){
+				
+				if(ruleList.get(i).initstate.equals(ruleList.get(j).initstate) && 
+					ruleList.get(i).operator.equals(ruleList.get(j).operator) && 
+					ruleList.get(i).neighbours.equals(ruleList.get(j).neighbours) && 
+					ruleList.get(i).endstate.equals(ruleList.get(j).endstate))
+				
+				info("Identical rules are not allowed", Literals.GAME__RULES, j);
+				
+			}
+		}
+	}
 }
