@@ -1,7 +1,5 @@
 Game Test
 
-Grid Width 20 Height 20
-
 Positions
 
 X 24 Y 24
@@ -17,7 +15,7 @@ Rules
 
 Cell InitialState: Dead 
 	 AliveNeighbours: 1 2 
-	 EndState: Alive 
+	 EndState: Alive 	 	 
 	 
 Cell InitialState: Alive 
 	 Operator: greater than 
