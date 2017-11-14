@@ -2,6 +2,17 @@ Game Test
 
 Grid Width 20 Height 20
 
+Positions
+
+X 24 Y 24
+X 25 Y 26
+X 24 Y 25
+X 24 Y 27
+X 28 Y 21
+X 21 Y 21
+X 24 Y 23
+
+
 Rules
 
 Cell InitialState: Dead 

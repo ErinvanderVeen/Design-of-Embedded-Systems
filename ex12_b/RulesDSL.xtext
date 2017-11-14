@@ -4,11 +4,16 @@ generate rulesDSL "http://www.RulesDSL.gameOfLife"
 	
 Game: 'Game' name= ID 
 		grid = Grid
+		'Positions' (positions += Position)+
 	   'Rules' rules += Rule+;
 
 Grid: 'Grid'
 	  'Width' width = INT
 	  'Height' height = INT;
+	  
+Position: 'X' x = INT
+		  'Y' y = INT
+;
 
 Rule: 'Cell' 
 	   'InitialState:' initstate = State

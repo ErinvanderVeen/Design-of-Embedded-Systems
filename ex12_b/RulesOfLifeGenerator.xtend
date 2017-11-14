@@ -15,11 +15,11 @@ class RulesOfLifeGenerator {
 		
 		public class RulesOfLife {
 			public static void computeInitialConfig(ArrayList<Point> survivingCells) {
-				survivingCells.add(new Point(22, 22));
-				survivingCells.add(new Point(22, 23));
-				survivingCells.add(new Point(22, 24));
-				survivingCells.add(new Point(21, 23));
-				survivingCells.add(new Point(23, 23));
+				«FOR position: root.positions»
+				survivingCells.add(new Point(«position.x», «position.y»));
+				«ENDFOR»
+				
+				
 			}
 			
 			public static void computeSurvivors(boolean[][] gameBoard, ArrayList<Point> nextLiveCells) {
@@ -38,14 +38,12 @@ class RulesOfLifeGenerator {
 						
 						
 						«FOR rule: root.rules»
-						
-						«FOR neighbours: rule.neighbours»
-						
-						if(«toInitState(rule.initstate)» && surrounding «toOperator(rule.operator)» «neighbours»)
+
+						if(«toInitState(rule.initstate)» && («FOR neighbours: rule.neighbours SEPARATOR ' ||'»surrounding «toOperator(rule.operator)» «neighbours» «ENDFOR»))
 						{
 							«toEndState(rule.endstate)»	
 						}
-						«ENDFOR»
+						
 						«ENDFOR»
 		            }
 		        }
