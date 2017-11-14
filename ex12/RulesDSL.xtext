@@ -5,15 +5,20 @@ generate rulesDSL "http://www.gameoflife.org/rules/RulesDSL"
 Game:
 	'Game' name = ID
 	(field = Field)?
+	("Initial" "field:" initial += Point+)?
 	// Rules that are defined last have the highest priority if
 	// they contradict each other
 	'Rules:' rules += Rule+
 ;
 
+Point:
+	"(" x = INT "," y = INT ")"
+;
+
 Field:
 	'Field:'
 	'width:' width = INT
-	'height:' height = INT
+	'height:' height = INT	
 ;
 
 Rule:
