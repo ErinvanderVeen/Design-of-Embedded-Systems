@@ -13,19 +13,16 @@ Grid: 'Grid'
 Rule: 'Cell' 
 	   'InitialState:' initstate = State
 	   ('Operator:' operator = Operator)? 
-	   'AliveNeighbours:' neighbours = Neighbours 
+	   'AliveNeighbours:' (neighbours += INT)+ 
 	   'EndState:' endstate = State;
 
-Neighbours: 
-	INT;
-
 enum State:
-	Alive = 'Alive' | Dead = 'Dead';
+	ALIVE = 'Alive' | DEAD = 'Dead';
 	
 enum Operator: 
-	Exactly = 'exactly' |
-	Fewer = 'fewer than' |
-	Greater = 'greater than';
+	EXACTLY = 'exactly' |
+	FEWER = 'fewer than' |
+	GREATER = 'greater than';
 	
 
 		

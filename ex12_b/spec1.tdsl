@@ -5,7 +5,7 @@ Grid Width 20 Height 20
 Rules
 
 Cell InitialState: Dead 
-	 AliveNeighbours: 3 
+	 AliveNeighbours: 3 4
 	 EndState: Alive 
 	 
 Cell InitialState: Alive 
@@ -17,4 +17,10 @@ Cell InitialState: Alive
 	 Operator: fewer than 
 	 AliveNeighbours: 2 
 	 EndState: Dead 
+	 	 
+
+
+
+	 
+
 

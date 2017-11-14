@@ -39,10 +39,13 @@ class RulesOfLifeGenerator {
 						
 						«FOR rule: root.rules»
 						
-						if(«toInitState(rule.initstate)» && surrounding «toOperator(rule.operator)» «rule.neighbours»)
+						«FOR neighbours: rule.neighbours»
+						
+						if(«toInitState(rule.initstate)» && surrounding «toOperator(rule.operator)» «neighbours»)
 						{
 							«toEndState(rule.endstate)»	
 						}
+						«ENDFOR»
 						«ENDFOR»
 		            }
 		        }
