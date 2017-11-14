@@ -16,7 +16,7 @@ X 24 Y 23
 Rules
 
 Cell InitialState: Dead 
-	 AliveNeighbours: 3 4
+	 AliveNeighbours: 1 2 
 	 EndState: Alive 
 	 
 Cell InitialState: Alive 
