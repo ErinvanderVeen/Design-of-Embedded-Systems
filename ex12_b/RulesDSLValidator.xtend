@@ -21,10 +21,23 @@ class RulesDSLValidator extends AbstractRulesDSLValidator {
 		for(var i = 0; i < rule.neighbours.size(); i++)
 		{
 			if(rule.neighbours.get(i) >  8) 
-				{warning("Neighbour number should not be greater than 8", Literals.RULE__NEIGHBOURS);}
+				{warning("The number of neighbours should not be greater than 8", Literals.RULE__NEIGHBOURS);}
 			else if(rule.neighbours.get(i) < 0){
-				warning("Neighbour number should not be negative", Literals.RULE__NEIGHBOURS);
+				error("The number of neighbours cannot be negative", Literals.RULE__NEIGHBOURS);
 			}
+			 
+		}
+	}
+	@Check
+	def checkForNegativePositions(Game root)
+	{
+		for(var i = 0; i < root.positions.size(); i++)
+		{
+			if(root.positions.get(i).x < 0 || root.positions.get(i).y < 0 ) 
+				{
+					error("Coordinates(x,y) must have positive values", Literals.GAME__POSITIONS, i);
+					
+				}
 			 
 		}
 	}
