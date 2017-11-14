@@ -2,6 +2,8 @@ Game testGame
 
 Field: width: 20 height: 10
 
+Initial field: (1,1) (5,5)
+
 Rules:
 Rule: Cell becomes alive if number of alive neighbors is 3
 Rule: Cell lives if number of alive neighbors is 2

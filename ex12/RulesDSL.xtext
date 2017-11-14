@@ -4,7 +4,7 @@ generate rulesDSL "http://www.gameoflife.org/rules/RulesDSL"
 
 Game:
 	'Game' name = ID
-	(field = Field)?
+	field = Field
 	("Initial" "field:" initial += Point+)?
 	// Rules that are defined last have the highest priority if
 	// they contradict each other
