@@ -3,6 +3,7 @@
  */
 package gameOfLife.validation
 
+import gameOfLife.rulesDSL.Game
 import gameOfLife.rulesDSL.Rule
 import gameOfLife.rulesDSL.RulesDSLPackage.Literals
 import org.eclipse.xtext.validation.Check
@@ -20,11 +21,25 @@ class RulesDSLValidator extends AbstractRulesDSLValidator {
 		for(var i = 0; i < rule.neighbours.size(); i++)
 		{
 			if(rule.neighbours.get(i) >  8) 
-				{warning("Neighbour number should not be great than 8", Literals.RULE__NEIGHBOURS);}
+				{warning("Neighbour number should not be greater than 8", Literals.RULE__NEIGHBOURS);}
 			else if(rule.neighbours.get(i) < 0){
 				warning("Neighbour number should not be negative", Literals.RULE__NEIGHBOURS);
 			}
 			 
+		}
+	}
+	@Check
+	def checkIdenticalCordinates(Game root)
+	{
+		var posList = root.positions
+		for(var i=0; i < posList.size; i++){
+			for(var j=i+1; j < posList.size; j++){
+				
+				if(posList.get(i).x.equals(posList.get(j).x) && posList.get(i).y.equals(posList.get(j).y))
+				
+				error("Identical coordinates are not allowed", Literals.GAME__POSITIONS);
+				
+			}
 		}
 	}
 }
