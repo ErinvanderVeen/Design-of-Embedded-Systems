@@ -1,1 +1,11 @@
-/home/erin/ownCloud/runtime-EclipseXtext/org.vanderveen.ev3rt.models/specs/spec1.ev3
+Mission AvoidCrash
+
+Behaviors:
+	AvoidBorder
+		Conditions: colorSensor equals Black
+		Actions: 
+			Turn left
+			Move forward 50 milliseconds
+	Walk
+		Actions:
+			Move forward 50 milliseconds

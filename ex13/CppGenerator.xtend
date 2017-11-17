@@ -1,1 +1,8 @@
-/home/erin/ownCloud/EX13Meta/org.vanderveen.ev3rt.dsl/src/org/vanderveen/ev3rt/generator/CppGenerator.xtend
+package org.vanderveen.ev3rt.generator
+
+import org.vanderveen.ev3rt.behaviourDSL.Mission
+
+class CppGenerator {
+	def static toCpp(Mission mission)'''
+	'''
+}
