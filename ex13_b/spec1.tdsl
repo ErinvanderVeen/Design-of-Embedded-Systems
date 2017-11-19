@@ -4,5 +4,5 @@ Behaviors:
 
 AvoidBlackBorder 
 Sensor: Light == black
-Action: Avoid Right 180 degrees backward 30
+Action: Avoid Right 180 backward 30
 

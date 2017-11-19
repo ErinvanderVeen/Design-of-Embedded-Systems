@@ -254,7 +254,7 @@ class MissionGenerator {
 	'''if(ultrasonic «toOperator(sensor.operator)» «sensor.distance»)'''
 	
 	def static dispatch toAction(Led action)
-	'''ev3_led_set_color(«action.ledColor»);'''
+	'''ev3_led_set_color(«toLed(action.ledColor)»);'''
 	
 	def static dispatch toAction(Sound action)
 	'''ev3_speaker_play_tone(«action.frequency», «action.duration»);'''
@@ -264,6 +264,6 @@ class MissionGenerator {
 	   ev3_motor_stop(LEFT_P, true);
 	   ev3_motor_stop(RIGHT_P, true);
 	   //move backwards with 180 angle to the right
-	   ev3_motor_rotate(«action.motor», «action.angle», «action.direction»«action.speed», true);'''
+	   ev3_motor_rotate(«toMotor(action.motor)», «action.angle», «toDirection(action.direction)»«action.speed», true);'''
 		
 }

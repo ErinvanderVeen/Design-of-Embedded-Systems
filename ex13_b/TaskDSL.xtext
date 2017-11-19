@@ -40,7 +40,7 @@ enum Color:
 	BLUE   = 'blue'  |
 	WHITE  = 'white' ;
 
-Distance: INT 'cm';
+Distance: INT;
 
 //Action Part
 Action:  Avoid | Sound | Led ;
@@ -60,17 +60,17 @@ enum Motor:
 		LEFT  = 'Left' |
 		RIGHT = 'Right';
 
-Angle: INT 'degrees';
+Angle: INT;
 
 Speed: INT;
 			   
-Duration: INT 'ms';
+Duration: INT;
 
 enum Direction:
 		FORWARD  = 'forward' |
 		BACKWARD = 'backward';
 
-Frequency: INT 'Hz';
+Frequency: frequency = INT;
 
 enum LedColor:
 	
