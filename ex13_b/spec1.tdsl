@@ -1,0 +1,8 @@
+Mission Robot
+
+Behaviors:
+
+AvoidBlackBorder 
+Sensor: Light == black
+Action: Avoid Right 180 degrees backward 30
+

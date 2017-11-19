@@ -1,0 +1,79 @@
+grammar ev3rtLego.TaskDSL with org.eclipse.xtext.common.Terminals
+
+generate taskDSL "http://www.TaskDSL.ev3rtLego"
+
+Mission: 'Mission' name=ID
+		 'Behaviors:' behaviours += Behaviour+;
+		 
+Behaviour: name = ID
+	      'Sensor:' sensors = Sensor
+	      'Action:' actions = Action;
+
+//Sensor Part
+Sensor: Touch | Light | Ultrasonic;
+
+Touch: 'Touch' operator = CompareOperator
+			      state = State;
+
+Light: 'Light' operator = CompareOperator
+			      color = Color;
+
+Ultrasonic: 'Ultrasonic' operator = CompareOperator 
+						 distance = Distance;
+
+enum CompareOperator: 
+	EQ  = '==' |
+	NEQ = "!=" |
+	G   = ">"  |
+	L   = "<"  |
+	GEQ = ">=" |
+	LEQ = "<=" ;
+	
+enum State: 
+	PRESSED    = "pressed"   |
+	NOTPRESSED = "notpressed";
+	
+enum Color: 
+	BLACK  = 'black' |
+	RED    = 'red'   |
+	YELLOW = 'yellow'|
+	BLUE   = 'blue'  |
+	WHITE  = 'white' ;
+
+Distance: INT 'cm';
+
+//Action Part
+Action:  Avoid | Sound | Led ;
+
+Avoid: 'Avoid'   motor = Motor
+				 angle = Angle
+	 		(direction = Direction)?
+				 speed = Speed
+		    ;
+
+Sound: 'Sound' duration = Duration 
+			   frequency = Frequency;
+
+Led: 'Led' ledColor = LedColor;
+
+enum Motor: 
+		LEFT  = 'Left' |
+		RIGHT = 'Right';
+
+Angle: INT 'degrees';
+
+Speed: INT;
+			   
+Duration: INT 'ms';
+
+enum Direction:
+		FORWARD  = 'forward' |
+		BACKWARD = 'backward';
+
+Frequency: INT 'Hz';
+
+enum LedColor:
+	
+	GREEN  = 'green' | 
+	RED    = 'red'   |
+	ORANGE = 'orange';
