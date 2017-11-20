@@ -241,7 +241,7 @@ class MissionGenerator {
 		touch_right «toOperator(sensor.operator)» «toState(sensor.state)»)'''	
 	
 	def static dispatch toSensor(Light sensor)
-	'''if(color «toOperator(sensor.operator)» «toColors(sensor.color)»)'''	
+	'''if(«FOR color: sensor.color SEPARATOR ' ||'» color «toOperator(sensor.operator)» «toColors(color)»«ENDFOR»)'''	
 	
 	def static dispatch toSensor(Ultrasonic sensor)
 	'''if(ultrasonic «toOperator(sensor.operator)» «sensor.distance»)'''

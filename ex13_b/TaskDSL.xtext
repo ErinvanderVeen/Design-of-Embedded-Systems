@@ -16,7 +16,7 @@ Touch: 'Touch' operator = CompareOperator
 			      state = State;
 
 Light: 'Light' operator = CompareOperator
-			      color = Color;
+			      (color += Color)+;
 
 Ultrasonic: 'Ultrasonic' operator = CompareOperator 
 						 distance = Distance;

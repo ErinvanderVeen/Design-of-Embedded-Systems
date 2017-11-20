@@ -19,3 +19,9 @@ Action: Sound 250 500
 Action: Led orange
 Action: Avoid Right 180 backward 30
 
+AvoidAllColors
+Sensor: Light == red yellow blue
+Action: Led orange
+Action: Avoid Right 180 backward 30
+
+
