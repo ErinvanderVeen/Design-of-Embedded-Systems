@@ -40,6 +40,7 @@ enum Color:
 	BLUE   = 'blue'  |
 	WHITE  = 'white' ;
 
+
 Distance: INT;
 
 //Action Part

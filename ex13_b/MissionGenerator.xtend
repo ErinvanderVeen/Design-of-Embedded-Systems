@@ -45,6 +45,8 @@ class MissionGenerator {
 		do_exit = false;
 	    colorid_t color;
 	    int16_t ultrasonic = 0;
+	    
+	    int red, yellow, blue; 
 	
 	void set_font(lcdfont_t font) {
 		ev3_lcd_set_font(font);
@@ -63,14 +65,14 @@ class MissionGenerator {
 	    
 	    «FOR behaviour: root.behaviours»
 	    «toSensor(behaviour.sensors)»
-	    {
 	    «FOR action: behaviour.actions»
 	    «toAction(action)»
 	    «ENDFOR»
-	    
 	    }
 	    
 	    «ENDFOR»
+	    
+	    if(is_mission_accomplished()) break;
 	  
 	    sleep(100);
 	    read_sensors(1);
@@ -101,6 +103,9 @@ class MissionGenerator {
 		ev3_sensor_config(COLOR_P, COLOR_SENSOR);
 		ev3_sensor_config(TLEFT_P, TOUCH_SENSOR);
 		ev3_sensor_config(TRIGHT_P, TOUCH_SENSOR);
+		 red = 0;
+		 yellow = 0;
+		 blue = 0;
 	//	Attach exit handler
 		ev3_button_set_on_clicked(ENTER_BUTTON, close_app, ENTER_BUTTON);
 	}
@@ -126,6 +131,22 @@ class MissionGenerator {
 		ev3_print(start_line + 2, str);
 		snprintf(str, 100, "Color : %d", color);
 		ev3_print(start_line + 3, str);
+	}
+	
+	int is_mission_accomplished()
+	{
+	    //Check if all the colors have value 1.
+	    if(red == 1 && yellow == 1 && blue == 1) 
+	    {
+	    //stop motors
+		ev3_motor_stop(LEFT_P, true);
+	    ev3_motor_stop(RIGHT_P, true);
+	    //set led color to green, play tone and print success message.
+	    ev3_led_set_color(LED_GREEN);
+	    ev3_speaker_play_tone(250, 1000);
+	    return 1;
+	    }
+	    return 0;
 	}
 	
 	void close_app(intptr_t btn) {
@@ -178,6 +199,28 @@ class MissionGenerator {
 		return '''COLOR_WHITE'''
 		
 		default: return '''COLOR_WHITE'''
+		}
+		}
+		
+		def static toColorVals(Color color){
+		
+		switch(color){
+		case Color::BLACK:
+		return '''black'''
+		
+		case Color::RED:
+		return '''red'''
+		
+		case Color::YELLOW:
+		return '''yellow'''
+		
+		case Color::BLUE:
+		return '''blue'''
+		
+		case Color::WHITE:
+		return '''white'''
+		
+		default: return '''white'''
 		}
 		}
 		
@@ -238,13 +281,18 @@ class MissionGenerator {
 	
 	def static dispatch toSensor(Touch sensor)
 	'''if(touch_left «toOperator(sensor.operator)» «toState(sensor.state)» ||
-		touch_right «toOperator(sensor.operator)» «toState(sensor.state)»)'''	
+		touch_right «toOperator(sensor.operator)» «toState(sensor.state)»){'''	
 	
 	def static dispatch toSensor(Light sensor)
-	'''if(«FOR color: sensor.color SEPARATOR ' ||'» color «toOperator(sensor.operator)» «toColors(color)»«ENDFOR»)'''	
+	'''if(«FOR color: sensor.color SEPARATOR ' ||'» color «toOperator(sensor.operator)» «toColors(color)»«ENDFOR»)
+		 { 
+		 	«FOR color: sensor.color SEPARATOR ' else '»if(color == «toColors(color)» && !«toColorVals(color)»)
+		     {
+		        «toColorVals(color)» = 1;
+		     } «ENDFOR»'''	
 	
 	def static dispatch toSensor(Ultrasonic sensor)
-	'''if(ultrasonic «toOperator(sensor.operator)» «sensor.distance»)'''
+	'''if(ultrasonic «toOperator(sensor.operator)» «sensor.distance»){'''
 	
 	def static dispatch toAction(Led action)
 	'''ev3_led_set_color(«toLed(action.ledColor)»);'''
