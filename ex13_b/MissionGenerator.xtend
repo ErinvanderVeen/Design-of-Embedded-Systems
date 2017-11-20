@@ -64,21 +64,14 @@ class MissionGenerator {
 	    «FOR behaviour: root.behaviours»
 	    «toSensor(behaviour.sensors)»
 	    {
-	    «toAction(behaviour.actions)»
+	    «FOR action: behaviour.actions»
+	    «toAction(action)»
+	    «ENDFOR»
+	    
 	    }
 	    
 	    «ENDFOR»
-	    if(touch_left == 1 || touch_right == 1) //object detected
-	    {
-	    	ev3_speaker_play_tone(500, 1000);
-	    	ev3_led_set_color(LED_RED);
-	    	avoid();
-	    }
-	    if(ultrasonic <=30){
-	    	ev3_speaker_play_tone(250, 500);
-	    	ev3_led_set_color(LED_ORANGE);
-	    	avoid();
-	    }
+	  
 	    sleep(100);
 	    read_sensors(1);
 		}
@@ -257,7 +250,7 @@ class MissionGenerator {
 	'''ev3_led_set_color(«toLed(action.ledColor)»);'''
 	
 	def static dispatch toAction(Sound action)
-	'''ev3_speaker_play_tone(«action.frequency», «action.duration»);'''
+	'''ev3_speaker_play_tone(«action.duration», «action.frequency»);'''
 	
 	def static dispatch toAction(Avoid action)
 	'''//stop motors

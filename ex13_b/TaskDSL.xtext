@@ -7,7 +7,7 @@ Mission: 'Mission' name=ID
 		 
 Behaviour: name = ID
 	      'Sensor:' sensors = Sensor
-	      'Action:' actions = Action;
+	      ('Action:' actions += Action)+;
 
 //Sensor Part
 Sensor: Touch | Light | Ultrasonic;
@@ -48,11 +48,10 @@ Action:  Avoid | Sound | Led ;
 Avoid: 'Avoid'   motor = Motor
 				 angle = Angle
 	 		(direction = Direction)?
-				 speed = Speed
-		    ;
+				 speed = Speed;
 
-Sound: 'Sound' duration = Duration 
-			   frequency = Frequency;
+Sound: 'Sound' duration = INT
+			   frequency = INT;
 
 Led: 'Led' ledColor = LedColor;
 
@@ -64,13 +63,9 @@ Angle: INT;
 
 Speed: INT;
 			   
-Duration: INT;
-
 enum Direction:
 		FORWARD  = 'forward' |
 		BACKWARD = 'backward';
-
-Frequency: frequency = INT;
 
 enum LedColor:
 	
