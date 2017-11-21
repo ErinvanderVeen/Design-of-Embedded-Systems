@@ -1,6 +1,19 @@
 package org.vanderveen.ev3rt.generator
 
 import org.vanderveen.ev3rt.behaviourDSL.Mission
+import org.vanderveen.ev3rt.behaviourDSL.Condition
+import org.vanderveen.ev3rt.behaviourDSL.Behaviour
+import org.vanderveen.ev3rt.behaviourDSL.Operator
+import org.vanderveen.ev3rt.behaviourDSL.Sensor
+import org.vanderveen.ev3rt.behaviourDSL.Value
+import org.vanderveen.ev3rt.behaviourDSL.PressedState
+import org.vanderveen.ev3rt.behaviourDSL.Color
+import org.vanderveen.ev3rt.behaviourDSL.Distance
+import org.vanderveen.ev3rt.behaviourDSL.TouchValue
+import org.vanderveen.ev3rt.behaviourDSL.ColorValue
+import org.vanderveen.ev3rt.behaviourDSL.Move
+import org.vanderveen.ev3rt.behaviourDSL.Turn
+import org.vanderveen.ev3rt.behaviourDSL.Direction
 
 class CppGenerator {
 	def static toCpp(Mission mission)'''
@@ -33,7 +46,8 @@ class CppGenerator {
 			motor_port_t LEFT_P;
 			motor_port_t RIGHT_P;
 		};
-
+		
+		
 		class RobotAction {
 			public:
 				// Be careful with PASS! Sensor Data is not updated for the next action
@@ -43,22 +57,9 @@ class CppGenerator {
 				virtual void printName() = 0;
 		};
 
-		class WalkAction : public RobotAction {
-			public:
-				Control takeControl(SensorData& sensor_data) {
-					return PASS;
-				}
-
-				void perform(SensorData& sensor_data, Sensors& sensors) {
-					ev3_motor_set_power(sensors.LEFT_P, 20);
-					ev3_motor_set_power(sensors.RIGHT_P, 20);
-					sleep(50);
-				}
-
-				void printName() {
-					ev3_print(0, "Walk");
-				}
-		};
+		«FOR behavior : mission.behaviours»
+				«fromBehavior(behavior)»;
+		«ENDFOR»
 
 		class Arbitrator {
 			public:
@@ -137,9 +138,10 @@ class CppGenerator {
 			Arbitrator arbitrator(sensor_data, sensors);
 
 			// TODO: Create RobotActions and apply to arbitrator
-			WalkAction wa;
+			«FOR behavior : mission.behaviours»
+				arbitrator.apply(new «behavior.name»());
+			«ENDFOR»
 
-			arbitrator.apply(&wa);
 
 			arbitrator.start();
 			return;
@@ -167,4 +169,100 @@ class CppGenerator {
 			ev3_sensor_config(sensors.TRIGHT_P, TOUCH_SENSOR);
 		}
 	'''
+	
+	def static fromBehavior(Behaviour behaviour)'''
+		class «behaviour.name» : public RobotAction {
+					public:
+						Control takeControl(SensorData& sensor_data) {
+							«IF behaviour.conditions !== null»
+							if(«FOR condition : behaviour.conditions SEPARATOR " && "»
+								«fromCondition(condition)»
+							«ENDFOR»)
+							«ENDIF»
+								return BLOCK;
+							return SKIP;
+						}
+						
+						void perform(SensorData& sensor_data, Sensors& sensors) {
+							«FOR action : behaviour.actions»
+								«fromAction(action)»;
+							«ENDFOR»
+						}
+						
+						void printName() {
+							ev3_print(0, "«behaviour.name»");
+						}
+				}'''
+	
+	def static dispatch fromAction(Move move)'''
+			ev3_motor_set_power(sensors.LEFT_P, «IF move.direction == Direction::FORWARD»20«ENDIF»«IF move.direction == Direction::BACKWARD»-20«ENDIF»);
+			ev3_motor_set_power(sensors.RIGHT_P, «IF move.direction == Direction::FORWARD»20«ENDIF»«IF move.direction == Direction::BACKWARD»-20«ENDIF»);
+			sleep(«move.duration.time»);
+	'''
+	
+	def static dispatch fromAction(Turn turn) '''
+			ev3_motor_set_power(sensors.LEFT_P, «IF turn.direction == Direction::LEFT»-20«ENDIF»«IF turn.direction == Direction::RIGHT»20«ENDIF»);
+			ev3_motor_set_power(sensors.RIGHT_P, «IF turn.direction == Direction::LEFT»20«ENDIF»«IF turn.direction == Direction::RIGHT»-20«ENDIF»);
+			sleep(«turn.duration.time»);
+	'''
+	
+	def static fromCondition(Condition condition)'''
+		«fromSensor(condition.sensor)» «fromOperator(condition.operator)» «fromValue(condition.value)»
+	'''
+	
+	def static fromSensor(Sensor sensor) {
+		switch(sensor) {
+			case Sensor::TOUCH_L: return '''sensor_data.touch_left'''
+			case Sensor::TOUCH_R: return '''sensor_data.touch_right'''
+			case Sensor::COLOR: return '''sensor_data.color'''
+			case Sensor::SONIC: return '''sensor_data.ultrasonic'''
+			default: throw new UnsupportedOperationException("Unsupported Sensor")
+		}		
+	}
+	
+	def static fromOperator(Operator operator) {
+		switch(operator) {
+			case Operator::EQ: return '''=='''	
+			case Operator::NEQ: return '''!='''
+			case Operator::GT: return '''>'''
+			case Operator::LT: return '''<'''
+			case Operator::GEQ: return '''>='''
+			case Operator::LEQ: return '''<='''
+			default: throw new UnsupportedOperationException("Unsupported Operator")
+		}
+	}
+	
+	def static dispatch fromValue(TouchValue state) {
+		switch(state.pressed) {
+			case PressedState::PRESSED:
+				return '''1'''
+			case PressedState::UNPRESSED:
+				return '''0'''
+			default:
+				throw new UnsupportedOperationException("Unsupported Pressed State")
+		}
+	}
+	
+	def static dispatch fromValue(ColorValue color) {
+		switch(color.color) {
+			case BLACK:
+				return '''COLOR_BLACK'''
+			case BLUE:
+				return '''COLOR_BLUE'''
+			case RED:
+				return '''COLOR_RED'''
+			case WHITE:
+				return '''COLOR_WHITE'''
+			case YELLOW:
+				return '''COLOR_YELLOW'''
+			default:
+				throw new UnsupportedOperationException("Unsupported Color")
+			
+		}
+	}
+	
+	def static dispatch fromValue(Distance dist)'''
+		«dist.cm»
+	'''
+	
 }

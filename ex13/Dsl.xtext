@@ -10,7 +10,7 @@ Mission:
 Behaviour:
 	name = ID
 	('Conditions:' conditions += Condition*)?
-	'Actions:' action += Action+
+	'Actions:' actions += Action+
 ;
 
 // Conditions
@@ -21,20 +21,31 @@ Condition:
 ;
 
 enum Sensor:
-	Touch = 'touchSensor' |
+	TouchL = 'touchSensor left' |
+	TouchR = 'touchSensor right' |
 	Color = 'colorSensor' |
 	Sonic = 'ultrasonicSensor'
 ;
 
 enum Operator:
-	is = 'equals' |
-	isnot = 'not equals' |
-	greater = 'is greater than' |
-	lower = 'is lower than'
+	EQ  = '==' |
+	NEQ = "!=" |
+	GT  = ">"  |
+	LT  = "<"  |
+	GEQ = ">=" |
+	LEQ = "<="
 ;
 
 Value:
-	(pressed = PressedState | color = Color | distance = Distance)
+	TouchValue | ColorValue | Distance
+;
+
+TouchValue:
+	pressed = PressedState
+;
+
+ColorValue:
+	color = Color
 ;
 
 enum PressedState:
@@ -51,7 +62,7 @@ Distance:
 
 // Actions
 Action:
-	action = (Move | Turn | Sound)// | Light)
+	Move | Turn// | Sound// | Light)
 ;
 
 Move:
@@ -59,7 +70,7 @@ Move:
 ;
 
 Turn:
-	'Turn' direction = Direction
+	'Turn' direction = Direction duration = Duration
 ;
 
 Sound:
