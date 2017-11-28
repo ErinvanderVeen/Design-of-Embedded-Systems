@@ -24,13 +24,14 @@ Table~\ref{tab:requirements} shows the individual requirements, including their 
 	SH2 & Measure lakes & The rover should be able to measure each lake once it has found one, it should try to avoid measuring the same lake twice. & A variable system must be implemented to store the knowledge base of the Rover.\\\hline
 	SH3 & Measure Rocks & Once a rock is found, the robot should be able to ``measure'' this rock. & \\\hline
 	CH1 & Clean up Rocks & Once a rock is ``measured'', the rover can push this rock out of the field & \\\hline
+	CH2 & Play Sound & The Rover could be able to play a sound whenever necessary & This must be implemented in both the DSL and C++ \\\hline
 	WH1 & Path-finding & The Robot will not be able to look ahead, or have a internal representation of the field & \\\hline
 \caption{Requirements of the Mars Rover DSL and Implementation, the code of a given requirement also indicates its priority. With MH = Must Have, SH = Should Have, CH = Could Have, WH = Wont Have}
 \label{tab:requirements}
 \end{longtable}
 
 \section{Configuration Proposal}
-Table~\ref{tab:config} show the proposed configuration in the way is was given in the slides.
+Table~\ref{tab:config} shows the proposed configuration in the way is was given in the slides.
 The decision was based on the core concept that Brick 1 is the master, and Brick 2 is the slave.
 This implies that all systems (sensors and motors) that require fast interaction are connected to Brick 1, all other systems are connected to Brick 2.
 It would be ideal if at least one color sensor (the center one) could also be connected to Brick 1, since it can be used to determine if the Robot is about to drive of the table.
@@ -59,7 +60,7 @@ Table~\ref{tab:plan} shows the development plan in its most pessimistic form.
 		Week 1 & 5 Dec & MH5, MH1 \\\hline
 		Week 2 & 12 Dec & MH2 MH3, MH4 \\\hline
 		Week 3 & 19 Dec & SH1, SH2, SH3 \\\hline
-		Week 4 & 26 Dec & CH1, and Extra \\\hline
+		Week 4 & 26 Dec & CH1, CH2, and Extra \\\hline
 	\end{tabular}
 	\caption{The Development Schedule}
 	\label{tab:plan}
