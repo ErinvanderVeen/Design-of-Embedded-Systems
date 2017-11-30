@@ -1,0 +1,93 @@
+grammar org.vanderveen.ev3rt.Dsl with org.eclipse.xtext.common.Terminals
+
+generate behaviourDSL "erinvanderveen.nl/behaviourDSL"
+
+Mission:
+	'Mission' name = ID
+	'Behaviors:' behaviours += Behaviour+
+;
+
+Behaviour:
+	name = ID
+	('Conditions:' conditions += Condition*)?
+	'Actions:' actions += Action+
+;
+
+// Conditions
+Condition:
+	sensor = Sensor
+	operator = Operator
+	value = Value
+;
+
+enum Sensor:
+	TouchL = 'touchSensor left' |
+	TouchR = 'touchSensor right' |
+	Color = 'colorSensor' |
+	Sonic = 'ultrasonicSensor'
+;
+
+enum Operator:
+	EQ  = '==' |
+	NEQ = "!=" |
+	GT  = ">"  |
+	LT  = "<"  |
+	GEQ = ">=" |
+	LEQ = "<="
+;
+
+Value:
+	TouchValue | ColorValue | Distance
+;
+
+TouchValue:
+	pressed = PressedState
+;
+
+ColorValue:
+	color = Color
+;
+
+enum PressedState:
+	Unpressed | Pressed
+;
+
+enum Color:
+	White | Black | Blue | Red | Yellow
+;
+
+Distance:
+	cm = INT 'cm'
+;
+
+// Actions
+Action:
+	Move | Turn// | Sound// | Light)
+;
+
+Move:
+	'Move' direction = Direction duration = Duration
+;
+
+Turn:
+	'Turn' direction = Direction duration = Duration
+;
+
+Sound:
+	'Play' 'sound' tone = Tone duration = Duration
+;
+
+Tone:
+	frequency = INT 'Hz'
+;
+
+enum Direction:
+	Forward = 'forward' |
+	Backward = 'backward' |
+	Left = 'left' |
+	Right = 'right'
+;
+
+Duration:
+	time = INT 'milliseconds'
+;
