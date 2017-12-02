@@ -28,22 +28,30 @@ class CppGenerator {
 		};
 
 		struct SensorData {
+			// MASTER
+			colorid_t color_left;
+			int16_t ultra_back;
+			int16_t gyro_angle;
+			int16_t gyro_rate;
+			colorid_t color_right;
+
+			// SLAVE
 			int touch_left;
+			colorid_t color_center;
+			int16_t ultra_front;
 			int touch_right;
-
-			colorid_t color;
-
-			int16_t ultrasonic;
 		};
 
 		// Should not be called "Sensors"
 		struct Sensors {
-			sensor_port_t TLEFT_P;
-			sensor_port_t COLOR_P;
-			sensor_port_t ULTRA_P;
-			sensor_port_t TRIGHT_P;
+			sensor_port_t COLORL_P;
+			sensor_port_t ULTRAB_P;
+			sensor_port_t GYRO_P;
+			sensor_port_t COLORR_P;
 
 			motor_port_t LEFT_P;
+
+			motor_port_t ARM_P;
 			motor_port_t RIGHT_P;
 		};
 
@@ -126,10 +134,12 @@ class CppGenerator {
 					}
 				}
 				void update_sensor_data() {
-					sensor_data.touch_left = ev3_touch_sensor_is_pressed(sensors.TLEFT_P);
-					sensor_data.touch_right = ev3_touch_sensor_is_pressed(sensors.TRIGHT_P);
-					sensor_data.color = ev3_color_sensor_get_color(sensors.COLOR_P);
-					sensor_data.ultrasonic = ev3_ultrasonic_sensor_get_distance(sensors.ULTRA_P);
+					// TODO: Add Bluetooth data
+					sensor_data.color_left = ev3_color_sensor_get_color(sensors.COLORL_P);
+					sensor_data.ultra_back = ev3_ultrasonic_sensor_get_distance(sensors.ULTRAB_P);
+					sensor_data.gyro_angle = ev3_gyro_sensor_get_angle(sensors.GYRO_P);
+					sensor_data.gyro_rate = ev3_gyro_sensor_get_rate(sensors.GYRO_P);
+					sensor_data.color_right = ev3_color_sensor_get_color(sensors.COLORR_P);
 					return;
 				}
 		};
@@ -143,25 +153,32 @@ class CppGenerator {
 		}
 
 		void init() {
+			// Setup Bluetooth
 			sensors = {
-				.TLEFT_P = EV3_PORT_1,
-				.COLOR_P = EV3_PORT_2,
-				.ULTRA_P = EV3_PORT_3,
-				.TRIGHT_P = EV3_PORT_4,
+				.COLORL_P = EV_PORT_1;
+				.ULTRAB_P = EV3_PORT_2;
+				.GYRO_P   = EV3_PORT_3;
+				.COLORR_P = EV3_PORT_4;
 
-				.LEFT_P = EV3_PORT_A,
-				.RIGHT_P = EV3_PORT_D
+				.LEFT_P  = EV3_PORT_A;
+
+				.ARM_P   = EV3_PORT_C;
+				.RIGHT_P = EV3_PORT_D;
 			};
 
 			set_font(EV3_FONT_MEDIUM);
+
+			//	Sensor init
+			ev3_sensor_config(sensors.COLORL_P, COLOR_SENSOR);
+			ev3_sensor_config(sensors.ULTRAB_P, ULTRASONIC_SENSOR);
+			ev3_sensor_config(sensors.GYRO_P, GYRO_SENSOR);
+			ev3_sensor_config(sensors.COLORR_P, COLOR_SENSOR);
+
 			//	Motor init
 			ev3_motor_config(sensors.LEFT_P, LARGE_MOTOR);
+
+			ev3_motor_config(sensors.ARM_P, MEDIUM_MOTOR);
 			ev3_motor_config(sensors.RIGHT_P, LARGE_MOTOR);
-			//	Sensor init
-			ev3_sensor_config(sensors.ULTRA_P, ULTRASONIC_SENSOR);
-			ev3_sensor_config(sensors.COLOR_P, COLOR_SENSOR);
-			ev3_sensor_config(sensors.TLEFT_P, TOUCH_SENSOR);
-			ev3_sensor_config(sensors.TRIGHT_P, TOUCH_SENSOR);
 		}
 
 		void arbitrator_task(intptr_t unused) {
