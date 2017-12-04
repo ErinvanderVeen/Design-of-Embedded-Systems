@@ -59,6 +59,10 @@ class CppGenerator {
 		SensorData sensor_data;
 		Sensors sensors;
 
+		uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB2, 0x6C, 0x86 };
+		const char* pin = "0000";
+		static FILE *bt_con;
+
 		class RobotAction {
 			public:
 				// Be careful with PASS! Sensor Data is not updated for the next action
@@ -152,8 +156,26 @@ class CppGenerator {
 			ev3_font_get_size(font, &FONT_WIDTH, &FONT_HEIGHT);
 		}
 
+		void btConnect() {
+			while(true) {
+				bt_con = fdopen(SIO_PORT_SPP_MASTER_TEST_FILENO, "a+");
+				//open file for update(read & write), append mode
+				if (bt_con != NULL) {
+					setbuf(bt_con, NULL);
+					while (!isConnected()) {
+						cycle_print((char*)"Connecting...");
+						spp_master_test_connect(slave_address, pin);
+						sleep(1000);
+					}
+					break;
+				}
+				sleep(1000);
+			}
+		}
+
 		void init() {
-			// Setup Bluetooth
+			btConnect();
+
 			sensors = {
 				.COLORL_P = EV_PORT_1;
 				.ULTRAB_P = EV3_PORT_2;
@@ -197,6 +219,17 @@ class CppGenerator {
 
 		void behavior_task(intptr_t unused) {
 			current_action->perform();
+		}
+
+		void bt_task(intptr_t unused) {
+
+			static char c;
+			while ((c = fgetc(bt_con))) {
+
+				// TODO: Incorportate Variable System
+
+				dly_tsk(500);
+			}
 		}
 
 	'''
