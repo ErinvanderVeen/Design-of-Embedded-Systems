@@ -172,6 +172,12 @@ class CppGenerator {
 				sleep(1000);
 			}
 		}
+		
+		bool_t isConnected() {
+			T_SERIAL_RPOR rpor;
+			ER ercd = serial_ref_por(SIO_PORT_SPP_MASTER_TEST, &rpor);
+			return ercd == E_OK;
+		}
 
 		void init() {
 			btConnect();
