@@ -138,22 +138,36 @@ class CppGenerator {
 					}
 				}
 				void update_sensor_data() {
-					// TODO: Add Bluetooth data
 					sensor_data.color_left = ev3_color_sensor_get_color(sensors.COLORL_P);
 					sensor_data.ultra_back = ev3_ultrasonic_sensor_get_distance(sensors.ULTRAB_P);
 					sensor_data.gyro_angle = ev3_gyro_sensor_get_angle(sensors.GYRO_P);
 					sensor_data.gyro_rate = ev3_gyro_sensor_get_rate(sensors.GYRO_P);
 					sensor_data.color_right = ev3_color_sensor_get_color(sensors.COLORR_P);
+
+					update_bt_sensors();
+
 					return;
 				}
-		};
 
+				void update_bt_sensors() {
+					fscanf(bt_con, "tl%d\n", &sensor_data.touch_left);
+					fscanf(bt_con, "tr%d\n", &sensor_data.touch_right);
+					fscanf(bt_con, "cm%d\n", &sensor_data.color_center);
+					fscanf(bt_con, "uf%d\n", &sensor_data.color_front);
+				}
+		};
 
 		int32_t FONT_WIDTH, FONT_HEIGHT;
 
 		void set_font(lcdfont_t font) {
 			ev3_lcd_set_font(font);
 			ev3_font_get_size(font, &FONT_WIDTH, &FONT_HEIGHT);
+		}
+
+		bool_t isConnected() {
+			T_SERIAL_RPOR rpor;
+			ER ercd = serial_ref_por(SIO_PORT_SPP_MASTER_TEST, &rpor);
+			return ercd == E_OK;
 		}
 
 		void btConnect() {
@@ -171,12 +185,6 @@ class CppGenerator {
 				}
 				sleep(1000);
 			}
-		}
-		
-		bool_t isConnected() {
-			T_SERIAL_RPOR rpor;
-			ER ercd = serial_ref_por(SIO_PORT_SPP_MASTER_TEST, &rpor);
-			return ercd == E_OK;
 		}
 
 		void init() {
@@ -225,17 +233,6 @@ class CppGenerator {
 
 		void behavior_task(intptr_t unused) {
 			current_action->perform();
-		}
-
-		void bt_task(intptr_t unused) {
-
-			static char c;
-			while ((c = fgetc(bt_con))) {
-
-				// TODO: Incorportate Variable System
-
-				dly_tsk(500);
-			}
 		}
 
 	'''
