@@ -2,9 +2,9 @@ Mission AvoidCrash
 
 Behaviors:
 	AvoidBorder
-		Conditions: colorSensor == Black
+		Conditions: colorSensor center == Black
 		Actions:
-			Turn left 50 milliseconds
+			Turn left 50 degrees
 			Move forward 50 milliseconds
 	Walk
 		Actions:

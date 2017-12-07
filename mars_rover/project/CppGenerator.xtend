@@ -21,6 +21,8 @@ class CppGenerator {
 
 		#include <iterator>
 		#include <list>
+		
+		int32_t FONT_WIDTH, FONT_HEIGHT, NLINES;
 
 		struct SharedMemory {
 			// IF NEEDED, this struct will store variables that must be shared between
@@ -44,15 +46,15 @@ class CppGenerator {
 
 		// Should not be called "Sensors"
 		struct Sensors {
-			sensor_port_t COLORL_P;
-			sensor_port_t ULTRAB_P;
-			sensor_port_t GYRO_P;
-			sensor_port_t COLORR_P;
+			sensor_port_t COLORL_P = EV3_PORT_1;
+			sensor_port_t ULTRAB_P = EV3_PORT_2;
+			sensor_port_t GYRO_P = EV3_PORT_3;
+			sensor_port_t COLORR_P = EV3_PORT_4;
 
-			motor_port_t LEFT_P;
+			motor_port_t LEFT_P = EV3_PORT_A;
 
-			motor_port_t ARM_P;
-			motor_port_t RIGHT_P;
+			motor_port_t ARM_P = EV3_PORT_C;
+			motor_port_t RIGHT_P = EV3_PORT_D;
 		};
 
 		SharedMemory shared_memory;
@@ -153,15 +155,21 @@ class CppGenerator {
 					fscanf(bt_con, "tl%d\n", &sensor_data.touch_left);
 					fscanf(bt_con, "tr%d\n", &sensor_data.touch_right);
 					fscanf(bt_con, "cm%d\n", &sensor_data.color_center);
-					fscanf(bt_con, "uf%d\n", &sensor_data.color_front);
+					fscanf(bt_con, "uf%d\n", &sensor_data.ultra_front);
 				}
 		};
-
-		int32_t FONT_WIDTH, FONT_HEIGHT;
 
 		void set_font(lcdfont_t font) {
 			ev3_lcd_set_font(font);
 			ev3_font_get_size(font, &FONT_WIDTH, &FONT_HEIGHT);
+		}
+
+		int line = 0;
+		void cycle_print(char* message) {
+			int printLine = ++line % NLINES;
+			if (line >= NLINES)
+				ev3_lcd_clear_line_range(printLine, printLine + 1);
+			ev3_print(printLine, message);
 		}
 
 		bool_t isConnected() {
@@ -189,18 +197,6 @@ class CppGenerator {
 
 		void init() {
 			btConnect();
-
-			sensors = {
-				.COLORL_P = EV_PORT_1;
-				.ULTRAB_P = EV3_PORT_2;
-				.GYRO_P   = EV3_PORT_3;
-				.COLORR_P = EV3_PORT_4;
-
-				.LEFT_P  = EV3_PORT_A;
-
-				.ARM_P   = EV3_PORT_C;
-				.RIGHT_P = EV3_PORT_D;
-			};
 
 			set_font(EV3_FONT_MEDIUM);
 
@@ -270,7 +266,7 @@ class CppGenerator {
 	def static dispatch fromAction(Turn turn) '''
 			ev3_motor_set_power(sensors.LEFT_P, «IF turn.direction == Direction::LEFT»-20«ENDIF»«IF turn.direction == Direction::RIGHT»20«ENDIF»);
 			ev3_motor_set_power(sensors.RIGHT_P, «IF turn.direction == Direction::LEFT»20«ENDIF»«IF turn.direction == Direction::RIGHT»-20«ENDIF»);
-			sleep(«turn.duration.time»);
+			sleep(«turn.rotation.degrees»);
 	'''
 	
 	def static fromCondition(Condition condition)'''
@@ -281,15 +277,18 @@ class CppGenerator {
 		switch(sensor) {
 			case Sensor::TOUCH_L: return '''sensor_data.touch_left'''
 			case Sensor::TOUCH_R: return '''sensor_data.touch_right'''
-			case Sensor::COLOR: return '''sensor_data.color'''
-			case Sensor::SONIC: return '''sensor_data.ultrasonic'''
+			case Sensor::COLOR_L: return '''sensor_data.color_left'''
+			case Sensor::COLOR_C: return '''sensor_data.color_center'''
+			case Sensor::COLOR_R: return '''sensor_data.color_right'''	
+			case Sensor::SONIC_F: return '''sensor_data.ultra_front'''
+			case Sensor::SONIC_B: return '''sensor_data.ultra_back'''
 			default: throw new UnsupportedOperationException("Unsupported Sensor")
 		}		
 	}
 	
 	def static fromOperator(Operator operator) {
 		switch(operator) {
-			case Operator::EQ: return '''=='''	
+			case Operator::EQ: return '''=='''
 			case Operator::NEQ: return '''!='''
 			case Operator::GT: return '''>'''
 			case Operator::LT: return '''<'''

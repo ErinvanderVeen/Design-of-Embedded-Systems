@@ -23,8 +23,11 @@ Condition:
 enum Sensor:
 	TouchL = 'touchSensor left' |
 	TouchR = 'touchSensor right' |
-	Color = 'colorSensor' |
-	Sonic = 'ultrasonicSensor'
+	ColorL = 'colorSensor left' |
+	ColorC = 'colorSensor center' |
+	ColorR = 'colorSensor right' |
+	SonicF = 'ultrasonicSensor front' |
+	SonicB = 'ultrasonicSensor back'
 ;
 
 enum Operator:
@@ -60,6 +63,10 @@ Distance:
 	cm = INT 'cm'
 ;
 
+Rotation:
+	degrees = INT 'degrees'
+;
+
 // Actions
 Action:
 	Move | Turn// | Sound// | Light)
@@ -70,7 +77,7 @@ Move:
 ;
 
 Turn:
-	'Turn' direction = Direction duration = Duration
+	'Turn' direction = Direction rotation = Rotation
 ;
 
 Sound:
