@@ -20,7 +20,7 @@ enum TruthValue:
 
 Behaviour:
 	name = ID ':' control = Control
-	('Conditions:' conditions += Condition*)?
+	('Conditions:' conditions += (Condition | Variable)*)?
 	'Actions:' actions += Action+
 ;
 
@@ -32,10 +32,9 @@ enum Control:
 
 // Conditions
 Condition:
-	(sensor = Sensor
+	sensor = Sensor
 	operator = Operator
-	value = Value) | 
-	(variable = Variable)
+	value = Value
 ;
 
 enum Sensor:
@@ -91,7 +90,7 @@ Action:
 ;
 
 Complete:
-	'Complete' name = ID
+	'Complete' code = INT
 ;
 
 Move:

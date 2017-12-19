@@ -14,6 +14,10 @@ import org.vanderveen.ev3rt.behaviourDSL.ColorValue
 import org.vanderveen.ev3rt.behaviourDSL.Move
 import org.vanderveen.ev3rt.behaviourDSL.Turn
 import org.vanderveen.ev3rt.behaviourDSL.Direction
+import org.vanderveen.ev3rt.behaviourDSL.Variable
+import org.vanderveen.ev3rt.behaviourDSL.TruthValue
+import org.vanderveen.ev3rt.behaviourDSL.Control
+import org.vanderveen.ev3rt.behaviourDSL.Complete
 
 class CppGenerator {
 	def static toCpp(Mission mission)'''
@@ -50,8 +54,9 @@ class CppGenerator {
 		
 
 		struct SharedMemory {
-			// IF NEEDED, this struct will store variables that must be shared between
-			// tasks
+			«FOR Variable variable : mission.variables»
+				«fromVariable(variable)»;
+			«ENDFOR»
 		};
 
 		struct SensorData {
@@ -277,16 +282,22 @@ class CppGenerator {
 
 	'''
 	
+	def static fromVariable(Variable variable)'''
+	«variable.name» = 
+		«IF variable.value == TruthValue::TRUE»true«ENDIF»
+		«IF variable.value == TruthValue::FALSE»false«ENDIF»
+		;
+	}
+	'''
+	
 	def static fromBehavior(Behaviour behaviour)'''
 		class «behaviour.name» : public RobotAction {
 					public:
 						Control takeControl() {
 							«IF !behaviour.conditions.isEmpty»
-							if(«FOR condition : behaviour.conditions SEPARATOR " && "»
-								«fromCondition(condition)»
-							«ENDFOR»)
+							if(«FOR condition : behaviour.conditions SEPARATOR " && "»«fromCondition(condition)»«ENDFOR»)
 							«ENDIF»
-								return BLOCK;
+								return «fromControl(behaviour.control)»;
 							return SKIP;
 						}
 						
@@ -301,13 +312,22 @@ class CppGenerator {
 						}
 				}'''
 	
+	def static fromControl(Control control) {
+		switch(control) {
+			case Control::SKIP: return '''SKIP'''
+			case Control::BLOCK: return '''BLOCK'''
+			case Control::PASS: return '''PASS'''
+			default: throw new UnsupportedOperationException("Unsupported Control Word")
+		}		
+	}
+	
 	def static dispatch fromAction(Move move)'''
 			ev3_motor_set_power(sensors.LEFT_P, «IF move.direction == Direction::FORWARD»20«ENDIF»«IF move.direction == Direction::BACKWARD»-20«ENDIF»);
 			ev3_motor_set_power(sensors.RIGHT_P, «IF move.direction == Direction::FORWARD»20«ENDIF»«IF move.direction == Direction::BACKWARD»-20«ENDIF»);
 			sleep(«move.duration.time»);
 	'''
 	
-	def static dispatch fromAction(Turn turn) '''
+	def static dispatch fromAction(Turn turn)'''
 			ev3_gyro_sensor_reset(sensors.GYRO_P);
 			while(ev3_gyro_sensor_get_angle(sensors.GYRO_P) < «turn.rotation.degrees» && ev3_gyro_sensor_get_angle(sensors.GYRO_P) > 360 - «turn.rotation.degrees») {
 				ev3_motor_set_power(sensors.LEFT_P, «IF turn.direction == Direction::LEFT»-20«ENDIF»«IF turn.direction == Direction::RIGHT»20«ENDIF»);
@@ -315,8 +335,23 @@ class CppGenerator {
 			}
 	'''
 	
-	def static fromCondition(Condition condition)'''
+	def static dispatch fromAction(Variable variable)'''
+		shared_memory.«variable.name» = 
+		«IF variable.value == TruthValue::TRUE»true«ENDIF»
+		«IF variable.value == TruthValue::FALSE»false«ENDIF»
+		;
+	'''
+	
+	def static dispatch fromAction(Complete complete)'''
+		exit(«complete.code»);
+	'''
+	
+	def static dispatch fromCondition(Condition condition)'''
 		«fromSensor(condition.sensor)» «fromOperator(condition.operator)» «fromValue(condition.value)»
+	'''
+	
+	def static dispatch fromCondition(Variable variable)'''
+		shared_memory.«variable.name»
 	'''
 	
 	def static fromSensor(Sensor sensor) {

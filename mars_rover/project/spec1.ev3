@@ -12,7 +12,7 @@ Behaviors:
 			blue
 			yellow
 		Actions:
-			Complete mission
+			Complete 0
 			
 	Detectred : Pass
 		Conditions:
