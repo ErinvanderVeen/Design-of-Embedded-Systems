@@ -26,7 +26,7 @@ extern "C" {
 
 #define ev3_lcd_clear() ev3_lcd_fill_rect(0, 0, EV3_LCD_WIDTH, EV3_LCD_HEIGHT, EV3_LCD_WHITE)
 #define ev3_lcd_clear_line(x) ev3_lcd_fill_rect(0, x * FONT_HEIGHT, EV3_LCD_WIDTH, FONT_HEIGHT, EV3_LCD_WHITE)
-#define ev3_lcd_clear_line_range(x, y) ev3_lcd_fill_rect(0, x * FONT_HEIGHT, EV3_LCD_WIDTH, (y - x) * FONT_HEIGHT, EV3_LCD_WHITE)
+#define ev3_lcd_clear_line_range(x, y) ev3_lcd_fill_rect(0, x * FONT_HEIGHT, EV3_LCD_WIDTH, (1 + y - x) * FONT_HEIGHT, EV3_LCD_WHITE)
 
 /**
  * Default font
@@ -45,6 +45,7 @@ extern void init();
  */
 extern void arbitrator_task(intptr_t);
 extern void behavior_task(intptr_t);
+extern void bluetooth_task(intptr_t);
 
 #endif /* TOPPERS_MACRO_ONLY */
 
