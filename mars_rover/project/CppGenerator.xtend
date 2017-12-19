@@ -292,7 +292,7 @@ class CppGenerator {
 						}
 						
 						void printName() {
-							ev3_print(0, "«behaviour.name»");
+							cycle_print((char*)"«behaviour.name»");
 						}
 				}'''
 	
