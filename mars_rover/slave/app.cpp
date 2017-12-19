@@ -20,8 +20,6 @@ colorid_t color_mid_new;
 int16_t ultrasonic_front_new;
 
 // TODO: Address needs to be verified
-uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB2, 0x6C, 0x86 };
-const char* pin = "0000";
 static FILE *bt_con;
 
 int line = 0;
@@ -49,24 +47,36 @@ void read_sensors() {
 }
 
 void send_data() {
-	if(touch_left_old != touch_left_new) {
-		fprintf(bt_con, "%s%d\n", "tl", touch_left_new);
+	if(touch_left_new != touch_left_old) {
+		cycle_print((char*)"i_send_touch_left");
+		putc('l', bt_con);
+		fwrite(&touch_left_new, sizeof(touch_left_new), 1, bt_con);
 		touch_left_old = touch_left_new;
+		cycle_print((char*)"o_send_touch_left");
 	}
 
-	if(touch_right_old != touch_right_new) {
-		fprintf(bt_con, "%s%d\n", "tr", touch_right_new);
+	if(touch_right_new != touch_right_old) {
+		cycle_print((char*)"i_send_touch_right");
+		putc('r', bt_con);
+		fwrite(&touch_right_new, sizeof(touch_right_new), 1, bt_con);
 		touch_right_old = touch_right_new;
+		cycle_print((char*)"o_send_touch_right");
 	}
 
-	if(color_mid_old != color_mid_new) {
-		fprintf(bt_con, "%s%d\n", "cm", color_mid_new);
+	if(color_mid_new != color_mid_old) {
+		cycle_print((char*)"i_send_color_mid");
+		putc('c', bt_con);
+		fwrite(&color_mid_new, sizeof(color_mid_new), 1, bt_con);
 		color_mid_old = color_mid_new;
+		cycle_print((char*)"o_send_color_mid");
 	}
 
-	if(ultrasonic_front_old != ultrasonic_front_new) {
-		fprintf(bt_con, "%s%d\n", "uf", ultrasonic_front_new);
+	if(ultrasonic_front_new != ultrasonic_front_old) {
+		cycle_print((char*)"i_send_ultra_front");
+		putc('u', bt_con);
+		fwrite(&ultrasonic_front_new, sizeof(ultrasonic_front_new), 1, bt_con);
 		ultrasonic_front_old = ultrasonic_front_new;
+		cycle_print((char*)"o_send_ultra_front");
 	}
 }
 
