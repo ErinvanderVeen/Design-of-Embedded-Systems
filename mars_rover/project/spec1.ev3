@@ -1,8 +1,21 @@
 Mission AvoidCrash
 
+Variables:
+	red = false
+	blue = false
+	yellow = false
+
 Behaviors:
+	Finish
+		Conditions:
+			red
+			blue
+			yellow
+		Actions:
+			Complete mission
 	AvoidBorder
-		Conditions: colorSensor center == Black
+		Conditions:
+			colorSensor center == Black
 		Actions:
 			Turn left 50 degrees
 			Move forward 50 milliseconds

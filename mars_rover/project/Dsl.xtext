@@ -4,7 +4,18 @@ generate behaviourDSL "erinvanderveen.nl/behaviourDSL"
 
 Mission:
 	'Mission' name = ID
+	('Variables:' variables += Variable+)?
 	'Behaviors:' behaviours += Behaviour+
+;
+
+Variable:
+	name = ID
+	("=" value = TruthValue)?
+;
+
+enum TruthValue:
+	False = 'false' |
+	True = 'true'
 ;
 
 Behaviour:
@@ -15,9 +26,10 @@ Behaviour:
 
 // Conditions
 Condition:
-	sensor = Sensor
+	(sensor = Sensor
 	operator = Operator
-	value = Value
+	value = Value) | 
+	(variable = Variable)
 ;
 
 enum Sensor:
@@ -69,7 +81,11 @@ Rotation:
 
 // Actions
 Action:
-	Move | Turn// | Sound// | Light)
+	Move | Turn | Variable | Complete// | Sound// | Light)
+;
+
+Complete:
+	'Complete' name = ID
 ;
 
 Move:
