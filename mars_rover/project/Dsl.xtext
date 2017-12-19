@@ -19,9 +19,15 @@ enum TruthValue:
 ;
 
 Behaviour:
-	name = ID
+	name = ID ':' control = Control
 	('Conditions:' conditions += Condition*)?
 	'Actions:' actions += Action+
+;
+
+enum Control:
+	SKIP = 'Skip' |
+	BLOCK = 'Block' |
+	PASS = 'Pass'
 ;
 
 // Conditions

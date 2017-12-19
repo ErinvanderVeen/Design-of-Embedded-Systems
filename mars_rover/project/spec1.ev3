@@ -6,19 +6,39 @@ Variables:
 	yellow = false
 
 Behaviors:
-	Finish
+	Finish : Block
 		Conditions:
 			red
 			blue
 			yellow
 		Actions:
 			Complete mission
-	AvoidBorder
+			
+	Detectred : Pass
+		Conditions:
+			colorSensor center == Red
+		Actions:
+			red = true
+			
+	Detectblue : Pass
+		Conditions:
+			colorSensor center == Blue
+		Actions:
+			blue = true
+			
+	Detectyellow : Pass
+		Conditions:
+			colorSensor center == Yellow
+		Actions:
+			yellow = true
+			
+	AvoidBorder : Block
 		Conditions:
 			colorSensor center == Black
 		Actions:
 			Turn left 50 degrees
 			Move forward 50 milliseconds
-	Walk
+			
+	Walk : Pass
 		Actions:
 			Move forward 50 milliseconds

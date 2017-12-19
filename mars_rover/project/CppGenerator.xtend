@@ -38,6 +38,11 @@ class CppGenerator {
 						current_action = action;
 						restart_behavior_task();
 						return;
+					case RobotAction::PASS:
+						current_action - action;
+						restart_behavior_task();
+						sleep(200);
+						break;
 				}
 			}
 			//cycle_print((char*)"o_assess_actions");
@@ -89,7 +94,7 @@ class CppGenerator {
 
 		class RobotAction {
 			public:
-				enum Control { SKIP, BLOCK };
+				enum Control { SKIP, BLOCK, PASS };
 				virtual Control takeControl() = 0;
 				virtual void perform() = 0;
 				virtual void printName() = 0;
