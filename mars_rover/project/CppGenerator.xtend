@@ -27,35 +27,19 @@ class CppGenerator {
 		#include <list>
 		
 		int32_t FONT_WIDTH, FONT_HEIGHT, NLINES;
-		
-		void assess_actions(RobotAction::Control& control) {
-			//cycle_print((char*)"i_assess_actions");
-			for (RobotAction* action : actions) {
-				control = action->takeControl();
 
-				switch (control) {
-					case RobotAction::SKIP:
-						// Do nothing
-						break;
-					case RobotAction::BLOCK:
-						//action->printName();
-						current_action = action;
-						restart_behavior_task();
-						return;
-					case RobotAction::PASS:
-						current_action - action;
-						restart_behavior_task();
-						sleep(200);
-						break;
-				}
-			}
-			//cycle_print((char*)"o_assess_actions");
-		}
+		int line = 0;
 		
+		void cycle_print(char* message) {
+			int printLine = ++line % NLINES;
+			if (line >= NLINES)
+				ev3_lcd_clear_line_range(printLine, printLine + 1);
+			ev3_print(printLine, message);
+		}
 
 		struct SharedMemory {
 			«FOR Variable variable : mission.variables»
-				«fromVariable(variable)»;
+				«fromVariable(variable)»
 			«ENDFOR»
 		};
 
@@ -149,24 +133,29 @@ class CppGenerator {
 					act_tsk(BEHAVIOR_TASK);
 				}
 
-				void assess_actions(RobotAction::Control& control) {
-					//cycle_print((char*)"i_assess_actions");
-					for (RobotAction* action : actions) {
-						control = action->takeControl();
-		
-						switch (control) {
-							case RobotAction::SKIP:
-								// Do nothing
-								break;
-							case RobotAction::BLOCK:
-								//action->printName();
-								current_action = action;
-								restart_behavior_task();
-								return;
-						}
+			void assess_actions(RobotAction::Control& control) {
+				//cycle_print((char*)"i_assess_actions");
+				for (RobotAction* action : actions) {
+					control = action->takeControl();
+	
+					switch (control) {
+						case RobotAction::SKIP:
+							// Do nothing
+							break;
+						case RobotAction::BLOCK:
+							//action->printName();
+							current_action = action;
+							restart_behavior_task();
+							return;
+						case RobotAction::PASS:
+							current_action = action;
+							restart_behavior_task();
+							sleep(200);
+							break;
 					}
-					//cycle_print((char*)"o_assess_actions");
 				}
+				//cycle_print((char*)"o_assess_actions");
+			}
 
 				void update_sensor_data() {
 					//cycle_print((char*)"i_update_sensor_data");
@@ -183,14 +172,6 @@ class CppGenerator {
 			ev3_lcd_set_font(font);
 			ev3_font_get_size(font, &FONT_WIDTH, &FONT_HEIGHT);
 			NLINES = EV3_LCD_HEIGHT / FONT_HEIGHT;
-		}
-
-		int line = 0;
-		void cycle_print(char* message) {
-			int printLine = ++line % NLINES;
-			if (line >= NLINES)
-				ev3_lcd_clear_line_range(printLine, printLine + 1);
-			ev3_print(printLine, message);
 		}
 
 		bool_t isConnected() {
@@ -283,11 +264,7 @@ class CppGenerator {
 	'''
 	
 	def static fromVariable(Variable variable)'''
-	«variable.name» = 
-		«IF variable.value == TruthValue::TRUE»true«ENDIF»
-		«IF variable.value == TruthValue::FALSE»false«ENDIF»
-		;
-	}
+	bool «variable.name» = «IF variable.value == TruthValue::TRUE»true«ENDIF»«IF variable.value == TruthValue::FALSE»false«ENDIF»;
 	'''
 	
 	def static fromBehavior(Behaviour behaviour)'''
@@ -336,14 +313,11 @@ class CppGenerator {
 	'''
 	
 	def static dispatch fromAction(Variable variable)'''
-		shared_memory.«variable.name» = 
-		«IF variable.value == TruthValue::TRUE»true«ENDIF»
-		«IF variable.value == TruthValue::FALSE»false«ENDIF»
-		;
+		shared_memory.«variable.name» = «IF variable.value == TruthValue::TRUE»true«ENDIF»«IF variable.value == TruthValue::FALSE»false«ENDIF»;
 	'''
 	
 	def static dispatch fromAction(Complete complete)'''
-		exit(«complete.code»);
+		exit(«complete.returncode»);
 	'''
 	
 	def static dispatch fromCondition(Condition condition)'''

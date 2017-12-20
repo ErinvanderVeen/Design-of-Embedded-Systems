@@ -9,6 +9,7 @@ extern "C" {
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include "driver_interface_bluetooth.h"
 #include "driver_interface_filesys.h"
 #include "syssvc/serial.h"

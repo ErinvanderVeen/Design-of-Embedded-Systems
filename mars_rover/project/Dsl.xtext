@@ -90,7 +90,7 @@ Action:
 ;
 
 Complete:
-	'Complete' code = INT
+	'Complete' returncode = INT
 ;
 
 Move:
