@@ -86,7 +86,11 @@ Rotation:
 
 // Actions
 Action:
-	Move | Turn | Variable | Complete// | Sound// | Light)
+	Move | Turn | Variable | Complete | Arm //| Sound// | Light)
+;
+
+Arm:
+	'Arm' direction = Direction
 ;
 
 Complete:
@@ -98,7 +102,7 @@ Move:
 ;
 
 Turn:
-	'Turn' direction = Direction rotation = Rotation
+	'Turn' directon = Direction rotation = Rotation
 ;
 
 Sound:
@@ -113,7 +117,9 @@ enum Direction:
 	Forward = 'forward' |
 	Backward = 'backward' |
 	Left = 'left' |
-	Right = 'right'
+	Right = 'right' |
+	Up = 'up' |
+	Down = 'down'
 ;
 
 Duration:

@@ -18,6 +18,7 @@ import org.vanderveen.ev3rt.behaviourDSL.Variable
 import org.vanderveen.ev3rt.behaviourDSL.TruthValue
 import org.vanderveen.ev3rt.behaviourDSL.Control
 import org.vanderveen.ev3rt.behaviourDSL.Complete
+import org.vanderveen.ev3rt.behaviourDSL.Arm
 
 class CppGenerator {
 	def static toCpp(Mission mission)'''
@@ -318,6 +319,10 @@ class CppGenerator {
 	
 	def static dispatch fromAction(Complete complete)'''
 		exit(«complete.returncode»);
+	'''
+	
+	def static dispatch fromAction(Arm arm)'''
+		ev3_motor_rotate(sensors.ARM_P, «IF arm.direction == Direction::UP»-«ENDIF»90, 10, true);
 	'''
 	
 	def static dispatch fromCondition(Condition condition)'''
