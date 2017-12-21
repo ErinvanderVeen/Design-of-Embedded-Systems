@@ -8,9 +8,9 @@ Variables:
 Behaviors:
 	Finish : Block
 		Conditions:
-			red
-			blue
-			yellow
+			red = true
+			blue = true
+			yellow = true
 		Actions:
 			Complete 0
 			
@@ -29,8 +29,12 @@ Behaviors:
 	Detectyellow : Pass
 		Conditions:
 			colorSensor center == Yellow
+			yellow = false
 		Actions:
+			Stop
 			yellow = true
+			Arm down
+			Arm up
 			
 	AvoidBorder : Block
 		Conditions:

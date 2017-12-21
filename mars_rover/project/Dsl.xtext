@@ -73,7 +73,7 @@ enum PressedState:
 ;
 
 enum Color:
-	White | Black | Blue | Red | Yellow
+	White | Black | Blue | Red | Yellow | Green
 ;
 
 Distance:
@@ -86,7 +86,11 @@ Rotation:
 
 // Actions
 Action:
-	Move | Turn | Variable | Complete | Arm //| Sound// | Light)
+	Move | Turn | Variable | Complete | Arm | Stop//| Sound// | Light)
+;
+
+Stop: {Stop}
+	'Stop'
 ;
 
 Arm:
@@ -98,11 +102,11 @@ Complete:
 ;
 
 Move:
-	'Move' direction = Direction duration = Duration
+	'Move' direction = Direction distance = Distance
 ;
 
 Turn:
-	'Turn' directon = Direction rotation = Rotation
+	'Turn' direction = Direction rotation = Rotation
 ;
 
 Sound:

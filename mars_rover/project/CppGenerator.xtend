@@ -19,6 +19,7 @@ import org.vanderveen.ev3rt.behaviourDSL.TruthValue
 import org.vanderveen.ev3rt.behaviourDSL.Control
 import org.vanderveen.ev3rt.behaviourDSL.Complete
 import org.vanderveen.ev3rt.behaviourDSL.Arm
+import org.vanderveen.ev3rt.behaviourDSL.Stop
 
 class CppGenerator {
 	def static toCpp(Mission mission)'''
@@ -78,9 +79,15 @@ class CppGenerator {
 		
 		int16_t gyro_angle = 0;
 
-		uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB2, 0x6C, 0x86 };
+		uint8_t slave_address[6] = { 0x00, 0x17, 0xE9, 0xB4, 0xCB, 0xF3 };
 		const char* pin = "0000";
 		static FILE *bt_con;
+		
+		
+		void stop_motors() {
+			ev3_motor_stop(sensors.LEFT_P, true);
+			ev3_motor_stop(sensors.RIGHT_P, true);
+		}
 
 		class RobotAction {
 			public:
@@ -92,6 +99,7 @@ class CppGenerator {
 		};
 
 		RobotAction* current_action;
+		RobotAction::Control current_control;
 
 		«FOR behavior : mission.behaviours»
 				«fromBehavior(behavior)»;
@@ -116,7 +124,9 @@ class CppGenerator {
 						assess_actions(control);
 
 						// Sleep to allow execution of behavior
-						tslp_tsk(100);
+						sleep(50);
+						
+
 					}
 					return;
 				}
@@ -135,9 +145,14 @@ class CppGenerator {
 				}
 
 			void assess_actions(RobotAction::Control& control) {
-				//cycle_print((char*)"i_assess_actions");
+				cycle_print((char*)"i_assess_actions");
+				
 				for (RobotAction* action : actions) {
 					control = action->takeControl();
+					if (action == current_action && current_control == RobotAction::BLOCK) {
+						// The current action has the highest priority
+						return;
+					}
 	
 					switch (control) {
 						case RobotAction::SKIP:
@@ -145,17 +160,21 @@ class CppGenerator {
 							break;
 						case RobotAction::BLOCK:
 							//action->printName();
-							current_action = action;
-							restart_behavior_task();
+							if (action != current_action) {
+								current_action = action;
+								restart_behavior_task();
+								current_control = RobotAction::BLOCK;
+							}
 							return;
 						case RobotAction::PASS:
-							current_action = action;
-							restart_behavior_task();
-							sleep(200);
-							break;
+							if (action != current_action) {
+								current_action = action;
+								restart_behavior_task();
+								current_control = RobotAction::PASS;
+							}
+							return;
 					}
 				}
-				//cycle_print((char*)"o_assess_actions");
 			}
 
 				void update_sensor_data() {
@@ -188,7 +207,7 @@ class CppGenerator {
 				if (bt_con != NULL) {
 					setbuf(bt_con, NULL);
 					while (!isConnected()) {
-						//cycle_print((char*)"Connecting...");
+						cycle_print((char*)"Connecting...");
 						spp_master_test_connect(slave_address, pin);
 						sleep(1000);
 					}
@@ -224,20 +243,21 @@ class CppGenerator {
 			init();
 		
 			Arbitrator* arbitrator = new Arbitrator;
-			//cycle_print((char*)"Arbitrator Created");
+			cycle_print((char*)"Arbitrator Created");
 		
-			arbitrator->apply(new AvoidBorder());
-			arbitrator->apply(new Walk());
+			«FOR Behaviour behaviour : mission.behaviours»
+				arbitrator->apply(new «behaviour.name»());
+			«ENDFOR»
 		
-			//cycle_print((char*)"Behaviors Created");
+			cycle_print((char*)"Behaviors Created");
 		
 			arbitrator->start();
 		}
 		
 		void behavior_task(intptr_t unused) {
-			//cycle_print((char*)"s_behavior_task");
+			cycle_print((char*)"s_behavior_task");
+			current_action->printName();
 			current_action->perform();
-			//cycle_print((char*)"e_behavior_task");
 		}
 		
 		void bluetooth_task(intptr_t unused) {
@@ -283,8 +303,10 @@ class CppGenerator {
 							«FOR action : behaviour.actions»
 								«fromAction(action)»
 							«ENDFOR»
+							current_action = NULL;
+							wup_tsk(ARBITRATOR_TASK);
 						}
-						
+		
 						void printName() {
 							cycle_print((char*)"«behaviour.name»");
 						}
@@ -300,17 +322,19 @@ class CppGenerator {
 	}
 	
 	def static dispatch fromAction(Move move)'''
-			ev3_motor_set_power(sensors.LEFT_P, «IF move.direction == Direction::FORWARD»20«ENDIF»«IF move.direction == Direction::BACKWARD»-20«ENDIF»);
-			ev3_motor_set_power(sensors.RIGHT_P, «IF move.direction == Direction::FORWARD»20«ENDIF»«IF move.direction == Direction::BACKWARD»-20«ENDIF»);
-			sleep(«move.duration.time»);
+		ev3_motor_set_power(sensors.LEFT_P, «IF move.direction == Direction::BACKWARD»-«ENDIF»20);
+		ev3_motor_set_power(sensors.RIGHT_P, «IF move.direction == Direction::BACKWARD»-«ENDIF»20);
+		sleep(90 * «move.distance.cm»);
+	'''
+	
+	def static dispatch fromAction(Stop stop)'''
+		stop_motors();
 	'''
 	
 	def static dispatch fromAction(Turn turn)'''
-			ev3_gyro_sensor_reset(sensors.GYRO_P);
-			while(ev3_gyro_sensor_get_angle(sensors.GYRO_P) < «turn.rotation.degrees» && ev3_gyro_sensor_get_angle(sensors.GYRO_P) > 360 - «turn.rotation.degrees») {
-				ev3_motor_set_power(sensors.LEFT_P, «IF turn.direction == Direction::LEFT»-20«ENDIF»«IF turn.direction == Direction::RIGHT»20«ENDIF»);
-				ev3_motor_set_power(sensors.RIGHT_P, «IF turn.direction == Direction::LEFT»20«ENDIF»«IF turn.direction == Direction::RIGHT»-20«ENDIF»);
-			}
+		ev3_motor_set_power(sensors.LEFT_P, «IF turn.direction == Direction::LEFT»-«ENDIF»10);
+		ev3_motor_set_power(sensors.RIGHT_P, «IF turn.direction == Direction::RIGHT»-«ENDIF»10);
+		sleep(6000 * «turn.rotation.degrees» / 360);
 	'''
 	
 	def static dispatch fromAction(Variable variable)'''
@@ -318,11 +342,13 @@ class CppGenerator {
 	'''
 	
 	def static dispatch fromAction(Complete complete)'''
+		ev3_motor_stop(sensors.LEFT_P, true);
+		ev3_motor_stop(sensors.RIGHT_P, true);
 		exit(«complete.returncode»);
 	'''
 	
 	def static dispatch fromAction(Arm arm)'''
-		ev3_motor_rotate(sensors.ARM_P, «IF arm.direction == Direction::UP»-«ENDIF»90, 10, true);
+		ev3_motor_rotate(sensors.ARM_P, «IF arm.direction == Direction::DOWN»-«ENDIF»90, 5, true);
 	'''
 	
 	def static dispatch fromCondition(Condition condition)'''
@@ -330,7 +356,7 @@ class CppGenerator {
 	'''
 	
 	def static dispatch fromCondition(Variable variable)'''
-		shared_memory.«variable.name»
+		shared_memory.«variable.name» == «variable.value»
 	'''
 	
 	def static fromSensor(Sensor sensor) {
@@ -381,6 +407,8 @@ class CppGenerator {
 				return '''COLOR_WHITE'''
 			case YELLOW:
 				return '''COLOR_YELLOW'''
+			case GREEN:
+				return '''COLOR_GREEN'''
 			default:
 				throw new UnsupportedOperationException("Unsupported Color")
 			
