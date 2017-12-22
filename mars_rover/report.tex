@@ -1,6 +1,7 @@
 \documentclass{scrartcl}
 
 \usepackage{longtable}
+\usepackage{minted}
 
 \title{Mars Rover Mission DSL}
 \author{Erin van der Veen - s4431200\\
@@ -84,6 +85,7 @@ There is a substantial difference between our proposed configuration and the one
 
 \subsection{Planning}
 Table~\ref{tab:plan} shows the development plan in its most pessimistic form.
+Table~\ref{tab:dev} shows the development as it was actually done by us.
 \begin{table}
 	\centering
 	\begin{tabular}{|l|l|l|}
@@ -98,22 +100,135 @@ Table~\ref{tab:plan} shows the development plan in its most pessimistic form.
 	\caption{The Development Schedule}
 	\label{tab:plan}
 \end{table}
-
-Table~\ref{tab:dev} shows the development as it was actually done by us.
 \begin{table}
 	\centering
 	\begin{tabular}{|l|l|l|}
 		\hline
 		Week nr & Deadline & Plan \\\hline
 		Week 0 & 28 Nov & Requirements, Configuration, Plan \\\hline
-		Week 1 & 5 Dec & MH5\\\hline
-		Week 2 & 12 Dec &  \\\hline
-		Week 3 & 19 Dec &  \\\hline
-		Week 4 & 26 Dec &  \\\hline
+		Week 1 & 5 Dec & MH5, MH1, MH2\\\hline
+		Week 2 & 12 Dec & Bluetooth \\\hline
+		Week 3 & 19 Dec & MH3, MH4, SH1, SH2, SH3, CH1 \\\hline
+		Week 4 & 26 Dec & Refinement \\\hline
 	\end{tabular}
 	\caption{The Development as it was actually performed}
 	\label{tab:dev}
 \end{table}
+
+In the Evaluation we will discus why the original plan didn't work out for us and how we managed to complete so many requirements in week 3.
+
+\subsection{Domain Specific Language}
+\subsubsection{Concept/Grammar}
+The Mars Rover was not designed with a specific goal in mind part from doing research on mars.
+We wanted this to reflect in our DSL, and therefore decided to create a very low level imperative task based DSL.
+\begin{minted}{antlr}
+Mission:
+	'Mission' name = ID
+	('Variables:' variables += Variable+)?
+	'Behaviors:' behaviours += Behaviour+
+;
+\end{minted}
+
+\paragraph{Variables}
+Making such a low level DSL implies that the user must be able to specify how far completed the mission is.
+This, naturally, led to the implementation of a boolean variable system.
+Ideally, one would also like to allow the definition of other types of variables.
+This is not implemented in the current version of the DSL due to time constraints.
+\begin{minted}{antlr}
+Variable:
+	name = ID
+	("=" value = TruthValue)?
+;
+\end{minted}
+
+\paragraph{Behavior}
+Every Mission (program specification) consists of a set of behaviors.
+The order in which these behaviors are defined in the Mission determines the priority.
+The first specified behavior has the highest priority.
+Behaviors consist of a set of Conditions and a set of Actions.
+The set of Conditions determine when a behavior must be executed, if this is the case the actions of the corresponding behavior are executed.
+The Control argument of a behavior will be explained later.
+For now, you can assume that only behaviors with a higher priority will subsume the current behavior when their condition is true.
+\begin{minted}{antlr}
+Behaviour:
+	name = ID ':' control = Control
+	('Conditions:' conditions += (Condition | Variable)*)?
+	'Actions:' actions += Action+
+;
+\end{minted}
+
+\paragraph{Condition}
+A condition as mentioned above can be either a variable or a condition.
+Right now, the syntax of the variable as a constraint is the same as assignment.
+Ideally, we would extend this to use normal equality operators.
+If we want to allow other types than booleans, this is a must have as well.
+The syntax of the other type of conditions is designed to consider the current sensor input.
+The \mintinline{antlr}{Value} type holds all possible output (Colors, Distance, Pressed/Unpressed), the \mintinline{antlr}{Operator} type is an enumeration of all common equality operators.
+Note, that these operators are not supported for \mintinline{antlr}{Variables}.
+\begin{minted}{antlr}
+Condition:
+	sensor = Sensor
+	operator = Operator
+	value = Value
+;
+\end{minted}
+
+\paragraph{Action}
+The Actions are mappings to the actuators of the Robot with a certain level of abstraction.
+\begin{minted}{antlr}
+Action:
+	Move | Turn | Variable | Complete | Arm | Stop
+;
+\end{minted}
+Every action has a set expected behavior for the robot:
+\begin{description}
+	\item[\mintinline{antlr}{Move :: Direction Distance}] The Robot moves \texttt{Direction} for \texttt{Distance} centimeters
+	\item[\mintinline{antlr}{Turn :: Direction Degrees}] The Robot turns \texttt{Direction} for \texttt{Degrees} degrees
+	\item[\mintinline{antlr}{Variable :: Name Value}] Set the variable \texttt{Name} to \texttt{Value}
+	\item[\mintinline{antlr}{Complete :: ReturnCode}] The program terminates with code \texttt{ReturnCode}
+	\item[\mintinline{antlr}{Arm :: Direction}] The measurement arm moves \texttt{Direction}
+	\item[\mintinline{antlr}{Stop}] The Robot stops moving
+\end{description}
+
+\paragraph{Control}
+Earlier I hinted at the control parameter that is specified for each possible behavior.
+I also mentioned that, until now, it was assumed that only a task of a higher priority subsumes behaviors of a lower priority.
+With this definition in mind, let us consider the following situation with two behaviors:
+\begin{minted}{python}
+AvoidBorder : Block
+	Conditions:
+		colorSensor center == Black
+	Actions:
+		Move backward 10 cm
+		Turn left 50 degrees
+
+WatchYourBack : Pass
+	Conditions:
+		ultrasonicSensor back > 3 cm
+	Actions:
+		Move forward 100 cm
+
+Walk : Pass
+	Actions:
+		Move forward 100 cm
+\end{minted}
+
+For the \texttt{AvoidBorder} behavior, we want the Robot to go back, and then turn left for 50 degrees.
+Only after we have done this do we want to continue walking.
+Note, that even before we turn left, the condition of the \texttt{AvoidBorder} is no longer true.
+This means that \texttt{Walk} would then become the behavior with the highest priority for which the condition is true.
+However, we only want to walk after we have completed \texttt{AvoidBorder}.
+
+Let's now consider the situation where the \texttt{WachtYourBack} condition is met, and the robot suddenly moves forward in order to avoid falling of the edge.
+Unlike the in paragraph above, we want to continue walking as soon as the border has been avoided.
+This means, that as soon as the conditions of the current behavior is no longer true, we want the program to also consider behaviors with a lower priority (even if the current actions have no been completed).
+
+This is where the \texttt{Control} enumeration comes into play.
+\texttt{BLOCK} means that the current behavior blocks the execution of all behaviors with a lower priority for as long as it is executing its actions.
+\texttt{PASS} means that the current behavior only blocks the execution of behaviors with a lower priority for as long as his own conditions are true. There is another control keyword (\texttt{SKIP}), which has some very subtle properties (and allows fast setting of variables without executing actions).
+The DSL does allow specifying this keyword, but it should not be used.
+
+\subsubsection{Implementation}
 
 \section{Evaluation}
 
