@@ -229,6 +229,58 @@ This is where the \texttt{Control} enumeration comes into play.
 The DSL does allow specifying this keyword, but it should not be used.
 
 \subsubsection{Implementation}
+\paragraph{RobotAction}
+The C++ code that is generated from the DSL, has a pure virtual class called \texttt{RobotAction}. That is defined as follows:
+\begin{minted}{cpp}
+class RobotAction {
+	public:
+		enum Control { SKIP, BLOCK, PASS };
+		virtual Control takeControl() = 0;
+		virtual void perform() = 0;
+		virtual void printName() = 0;
+};
+\end{minted}
+As we can see, the \texttt{Control} enumeration holds the \texttt{Control} argument of the behaviors.
+The \mintinline{cpp}{Control takeControl()} function is used to check the conditions specified in the DSL.
+Likewise, the \mintinline{cpp}{void perform()} function holds all the actions that are executed by this Behavior/RobotAction.
+
+\paragraph{Artbitrator}
+The class that deals with the subsumption and all related tasks is the \texttt{Arbitrator}.
+It will continuously check if there is a \texttt{RobotAction} that has priority.
+If this is the case, the current action is terminated and the other action is started.
+If the Robot manages to finish a task without getting subsumed, it itself invokes a run of the Arbitrator.
+This is done the make the time between actions as small as possible.
+
+\paragraph{Bluetooth}
+There are several implementation problems that arose when we tried to implement the link between the slave and master robot.
+Ideally we want a Mars Rover to be as deterministic as possible.
+Or, more nuanced, we want to be able to predict what the action of the robot will be at any point in time.
+This means that we, ourselves, want to be able to invoke the Bluetooth task that receives the data from the slave.
+Similar to how the JVM allows you to disable the Garbage Collector, so you must invoke it yourself.
+In order to do this, there are two options.
+\begin{enumerate}
+	\item Give the Bluetooth task the lowest priority, and sleeping all other tasks to invoke it.
+	\item Make reading non blocking.
+\end{enumerate}
+
+The first turned out to have the unfortunate side effect that you would never be sure how much of the bluetooth buffer you have read.
+A hack to solve this would be to ensure that you always read more than you write.
+However, this is undesirable, since we could well use the time to execute actions on the robot.
+
+The second option should be simple.
+There are several options that could have been used to make reading non-blocking:
+\begin{description}
+	\item[\mintinline{cpp}{select()}] Implemented incorrectly, never reaches timeout.
+	\item[\mintinline{cpp}{poll()}] Implemented incorrectly, should be non-blocking but is.
+	\item[\mintinline{cpp}{read()}] Implemented incorrectly, should be non-blocking but is.
+	\item[\mintinline{cpp}{fgets()}] Implemented incorrectly, should be non-blocking but is.
+	\item[\mintinline{cpp}{seek()}] Available, but unsupported on Bluetooth filedescriptor.
+	\item[\mintinline{cpp}{rewind()}] Available, but unsupported on Bluetooth filedescriptor.
+\end{description}
+Unfortunately, as you can read above, nearly all options we had for making the reading non-blocking were not properly supported on the OS.
+
+In the end, this meant that we had to settle for the approach that we also used last weeks.
+We set the Bluetooth task to have the highest priority, and accept the fact that the behavior of the Mars Rover is no longer deterministic.
 
 \section{Evaluation}
 
