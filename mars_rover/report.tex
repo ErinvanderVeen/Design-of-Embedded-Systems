@@ -284,21 +284,35 @@ In the end, this meant that we had to settle for the approach that we also used 
 We set the Bluetooth task to have the highest priority, and accept the fact that the behavior of the Mars Rover is no longer deterministic.
 
 \section{Evaluation}
+\subsection{DSL and Code Generation}
+The entire codebase is based on a previous project by Erin that was made for the LeapMotion.
+This project was always created with the intent to allow extensibility.
+Unfortunately some changes were needed to allow use in the Mars Rover.
+Most notably, explicit support for multi threading was added, and the behavior of the SKIP, BLOCK and PASS were changed.
+
+In reflection, using this framework allows us to create a very powerful DSL, but it does make it very verbose.
+If we had the option to recreate the DSL, a state machine based approach would probably better suit the use case.
+Not only would it allow smaller DSL code, but it would make reasoning much easier for the end user.
+
+Code generation was very straightforward, since it is on a very low level.
+The fact that it was created on such a low level means that, in practice, and desired mission can be programmed.
+However, the DSL does not include configuration, so change in that aspect of the robot requires modification to the C++-generator.
+
+\subsection{Kernel, OS, SDK}
 The Bluetooth added a unnecessary layer of complexity to the design of the Mars Rover.
 In general, this would not be a problem if Bluetooth was actually properly supported by the OS that we were forced to use.
 The fact that this was not the case, and that the documentation of all system calls is only available in Japanese, made the implementation of the Bluetooth connection very frustrating.
 
-There are other things that I do not like about the OS/SDK that we used.
+There are some other things about the OS/SDK that can make it fairly frustrating to work with.
 
 Firstly, all system calls and other library functions were statically linked/compiled with the application.
 There is absolutely no need to be the case.
-The kernel could just support dynamic linking, do this runtime.
+The kernel could just support dynamic linking, and do this runtime.
 This would not only prevent having bloated applications, but would also allow us to use whatever toolchain we prefer.
 For example, with the way that the current sdk works, it is (very) hard to elegantly link user created libraries in the final binary.
 If we could use our own toolchain, the only thing we had to ensure, is that it can dynamically link with the library provided by ev3rt.
 
-Secondly, they use a lot of POSIX syscalls \mintinline{cpp}{read, select, fopen, fgetc, write,
-fputs, poll, seek, open, etc} but for most of these the behavior is different to the one specified by the POSIX standard.
+Secondly, they use a lot of POSIX syscalls \mintinline{cpp}{read, select, fopen, write, poll, seek, open, etc} but for most of these the behavior is different to the one specified by the POSIX standard.
 As mentioned above, this would not be a major problem if we were able to read the documentation.
 But, as it stands, neither of us is able to read Japanese.
 \end{document}
