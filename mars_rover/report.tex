@@ -288,15 +288,32 @@ We set the Bluetooth task to have the highest priority, and accept the fact that
 The entire codebase is based on a previous project by Erin that was made for the LeapMotion.
 This project was always created with the intent to allow extensibility.
 Unfortunately some changes were needed to allow use in the Mars Rover.
-Most notably, explicit support for multi threading was added, and the behavior of the SKIP, BLOCK and PASS were changed.
+Most notably, explicit support for multi threading was added, and the behaviors of the SKIP, BLOCK and PASS were changed.
 
 In reflection, using this framework allows us to create a very powerful DSL, but it does make it very verbose.
 If we had the option to recreate the DSL, a state machine based approach would probably better suit the use case.
 Not only would it allow smaller DSL code, but it would make reasoning much easier for the end user.
 
 Code generation was very straightforward, since it is on a very low level.
-The fact that it was created on such a low level means that, in practice, and desired mission can be programmed.
+The fact that it was created on such a low level means that, in practice, any desired mission can be programmed.
 However, the DSL does not include configuration, so change in that aspect of the robot requires modification to the C++-generator.
+
+Adding other features to the DSL is a very straightforward process.
+Most of our time was spent on getting the framework to be as extensible as possible.
+This, in turn, means that modifications to framework are hardly ever needed for the new feature to work.
+
+\subsection{Development}
+The development schedule was hard to keep up to because we were unable to determine how long the implementation of a feature would take.
+This is largely due to the incomplete documentation that we had to work with.
+I will talk more about that later.
+All in all, we thought that we would need more time implementing the actual features of the DSL.
+This is a good thing, because it allowed us to spend more time on the perfection of the framework.
+
+Other than that, in general, we spend less time on the development that we expected.
+
+Development in general was done through eclipse.
+Neither of us had ever worked with eclipse, and it took quite some time to get used to the intricacy's of the IDE.
+Dealing with the instability and performance of Java, was the biggest issue.
 
 \subsection{Kernel, OS, SDK}
 The Bluetooth added a unnecessary layer of complexity to the design of the Mars Rover.
@@ -315,4 +332,27 @@ If we could use our own toolchain, the only thing we had to ensure, is that it c
 Secondly, they use a lot of POSIX syscalls \mintinline{cpp}{read, select, fopen, write, poll, seek, open, etc} but for most of these the behavior is different to the one specified by the POSIX standard.
 As mentioned above, this would not be a major problem if we were able to read the documentation.
 But, as it stands, neither of us is able to read Japanese.
+
+\subsection{Eclipse, Xtext, Xtend}
+Eclipse is a very large IDE that is designed primarily for use with Java.
+This implies that it comes with a lot of features that we did not use during this project.
+While this is not generally a problem, the result is that eclipse is very bloated.
+
+The fact that we were also obligated to use specific extensions meant, again, that we could not use our preferred toolchain.
+We propose using parser generators like GNU Bison to prevent being obliged to use eclipse.
+
+\subsection{DSL's in General}
+DSL's have a very specific use case, and we do not know if the Mars rover is a good use case.
+In general the Mars rover is likely to have very limited hardware available, in such a use case we want to be able to program as efficiently as possible.
+Part of this means that we do not want big parts of the abstraction that DSL's provide us.
+I would like to compare this to imperative versus functional programming.
+Functional programs are much less likely to have a bug, but their performance is much worse than imperative programs.
+
+Another point that we are not convinced of, is the readability of DSL's.
+We assume that the goal of many DSL's is to allow domain experts to program without the help of programmers.
+With the DSL's that we have seen during the course, and with the idea that DSL's need to be extensible, we do not see how domain experts would be able to write programs in such DSL's.
+We do, however, recognize that DSL's are much easier to read for domain experts.
+Here, we see great potential.
+Programmers are able to write their code in the DSL, and domain experts would be able to verify if the implementation is actually correct.
+
 \end{document}
