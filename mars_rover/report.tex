@@ -291,6 +291,14 @@ Unfortunately, as you can read above, nearly all options we had for making the r
 In the end, this meant that we had to settle for the approach that we also used last weeks.
 We set the Bluetooth task to have the highest priority, and accept the fact that the behavior of the Mars Rover is no longer deterministic.
 
+\paragraph{Randomness}
+For the implementation of our DSL we explicitly chose not to make use of randomness.
+Using randomness has the advantage that it prevents the robot from getting stuck in many situations.
+The most significant disadvantage, however, is that the deterministic behavior of the rover is compromised.
+Suppose that this rover was an actual mars rover, in many situations we would want to test a missions on earth first.
+We can do this by recreating the mars landscape, and testrunning here on earth.
+If we had used random behavior, such tests would not be possible, since there is no guarantee that the robot will perform the same way on mars.
+
 \section{Evaluation}
 \subsection{DSL and Code Generation}
 The entire codebase is based on a previous project by Erin that was made for the LeapMotion.
