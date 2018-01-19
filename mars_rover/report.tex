@@ -260,6 +260,9 @@ If this is the case, the current action is terminated and the other action is st
 If the Robot manages to finish a task without getting subsumed, it itself invokes a run of the Arbitrator.
 This is done the make the time between actions as small as possible.
 
+Since all control flow is arranged through the \texttt{Control} enumeration, any flaw in branching is trivially located in the Arbitrator.
+This reduces the room for bugs, and also makes them slightly easier to locate.
+
 \paragraph{Bluetooth}
 There are several implementation problems that arose when we tried to implement the link between the slave and master robot.
 Ideally we want a Mars Rover to be as deterministic as possible.
